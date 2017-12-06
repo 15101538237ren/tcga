@@ -19,12 +19,13 @@ snv_data_dir = os.path.join(raw_data_dir, "snv")
 cnv_data_dir = os.path.join(raw_data_dir, "cnv")
 GRCh38_dir = os.path.join(raw_data_dir, "GRCh38")
 
-intermediate_file_dir = os.path.join(raw_data_dir, "intermediate_file")
+intermediate_file_dir = os.path.join(data_dir, "intermediate_file")
 
 #fourth level dir
 methy_pkl_dir = os.path.join(intermediate_file_dir, "methy_pkl")
 manifest_dir = os.path.join(intermediate_file_dir, "manifest")
 metadata_dir = os.path.join(intermediate_file_dir, "metadata")
+
 methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate")
 
 dirs = [methy_pkl_dir, methy_intermidiate_dir]
