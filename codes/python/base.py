@@ -92,5 +92,14 @@ def read_tab_seperated_file_and_get_target_column(target_col_index, input_file_p
             line = input_file.readline()
     return ret_value_list
 
+#生成全局统一的gene_index_file
+def generate_gene_index(gene_idx_path):
+    with open(gene_idx_path,"w") as gene_idx_file:
+        gene_idx_file.write("\n".join([str(gidx+1) + "\t" + gene for gidx, gene in enumerate(GENOME)]))
+
+#some global variables
+gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
+generate_gene_index(gene_idx_path)
+
 if __name__ == '__main__':
     pass

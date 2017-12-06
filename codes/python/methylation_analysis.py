@@ -291,7 +291,7 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
     print "save methy data successfully!"
 
 #将某癌症数据写入到tsv文件中
-def dump_data_into_tsv_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
+def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
     [profile, profile_uuid] = profile_list
     stage_list = merged_stage if is_merge_stage else tumor_stages
     for stage_idx, stage_name in enumerate(stage_list):
@@ -318,13 +318,14 @@ def dump_data_into_tsv_according_to_cancer_type_and_stage(cancer_name, uuid_list
                     out_str.append(data_str)
             outfile.write("\n".join(out_str))
             outfile.close()
-    print "%s dump_data_into_tsv_according_to_cancer_type_and_stage" % cancer_name
+    print "%s dump_data_into_dat_according_to_cancer_type_and_stage" % cancer_name
 
 def print_samplesize_of_each_cancer(sample_count_filepath):
     gene_name = "APC"
     merged_stage_not_report = merged_stage[0:-1]
     ltws = []
     header_arr = ["cancer"]
+    merged_stage_not_report.append("total")
     header_arr.extend(merged_stage_not_report)
 
     ltws.append("\t".join(header_arr))
@@ -345,17 +346,18 @@ def print_samplesize_of_each_cancer(sample_count_filepath):
 
     with open(sample_count_filepath,"w") as sample_count_file:
         sample_count_file.write("\n".join(ltws))
-def dump_data_into_tsv_according_to_cancer_type_and_stage_pipepile():
+#生成dna甲基化的dat文件
+def dump_data_into_dat_according_to_cancer_type_and_stage_pipepile():
     for cancer_name in cancer_names:
-        if cancer_name in ["BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"]:
-            print "now start %s" % cancer_name
-            data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
-            pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
-            temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
-            out_dir = methy_intermidiate_dir + os.sep + cancer_name
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            dump_data_into_tsv_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, temp_profile_list, is_merge_stage=False)
+        print "now start %s" % cancer_name
+        data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
+        pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
+        temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
+        new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
+        out_dir = methy_intermidiate_dir + os.sep + cancer_name
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, new_profile_list, is_merge_stage=True)
 
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
@@ -376,13 +378,10 @@ def just_calc_methylation_pickle_pipeline():
         pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
         gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=False, whole_genes= True)
 
-#some global variables
-gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
-with open(gene_idx_path,"w") as gene_idx_file:
-    gene_idx_file.write("\n".join([str(gidx+1) + "\t" + gene for gidx, gene in enumerate(GENOME)]))
-
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
-print_samplesize_of_each_cancer(sample_count_path)
+if not os.path.exists(sample_count_path):
+    print_samplesize_of_each_cancer(sample_count_path)
+
 if __name__ == '__main__':
-    # just_calc_methylation_pickle_pipeline()
+    dump_data_into_dat_according_to_cancer_type_and_stage_pipepile()
     pass
