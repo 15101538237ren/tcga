@@ -294,8 +294,11 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
 def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
     [profile, profile_uuid] = profile_list
     stage_list = merged_stage if is_merge_stage else tumor_stages
+    dname = "merged_stage" if is_merge_stage else "stage"
     for stage_idx, stage_name in enumerate(stage_list):
-        output_cancer_dir = outdir
+        output_cancer_dir = os.path.join(outdir, dname)
+        if not os.path.exists(output_cancer_dir):
+            os.makedirs(output_cancer_dir)
         if stage_name != "not reported" and stage_name in profile_uuid.keys() and len(profile_uuid[stage_name]):
             out_uuid_id_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage_name + "_uuids.txt")
             write_tab_seperated_file_for_a_list(out_uuid_id_path, profile_uuid[stage_name],index_included=True)
