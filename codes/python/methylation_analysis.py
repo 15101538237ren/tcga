@@ -294,9 +294,8 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
 def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
     [profile, profile_uuid] = profile_list
     stage_list = merged_stage if is_merge_stage else tumor_stages
-    dname = "merged_stage" if is_merge_stage else "stage"
     for stage_idx, stage_name in enumerate(stage_list):
-        output_cancer_dir = os.path.join(outdir, dname)
+        output_cancer_dir = outdir
         if not os.path.exists(output_cancer_dir):
             os.makedirs(output_cancer_dir)
         if stage_name != "not reported" and stage_name in profile_uuid.keys() and len(profile_uuid[stage_name]):
@@ -357,10 +356,13 @@ def dump_data_into_dat_according_to_cancer_type_and_stage_pipepile():
         pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
         temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
         new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-        out_dir = methy_intermidiate_dir + os.sep + cancer_name
+        is_merge_stage = False
+        profile_list = new_profile_list if is_merge_stage else temp_profile_list
+        dname = "merged_stage" if is_merge_stage else "stage"
+        out_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, new_profile_list, is_merge_stage=True)
+        dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]

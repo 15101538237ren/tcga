@@ -27,15 +27,15 @@ manifest_dir = os.path.join(intermediate_file_dir, "manifest")
 metadata_dir = os.path.join(intermediate_file_dir, "metadata")
 
 methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate")
-
-dirs = [methy_pkl_dir, methy_intermidiate_dir]
+snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
+dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir]
 for dir_name in dirs:
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
 #global vars
 tumor_stages = ["normal","i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","x","not reported"]
-
+tumor_stages_n = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","x"]
 tumor_stage_convert = {"normal":"normal","i":"i","ia":"i","ib":"i","ii":"ii","iia":"ii","iib":"ii","iic":"ii","iii":"iii","iiia":"iii","iiib":"iii","iiic":"iii","iv":"iv","iva":"iv","ivb":"iv","ivc":"iv","x":"x","not reported":"not reported"}
 merged_stage = ["normal","i","ii","iii","iv","x","not reported"]
 merged_stage_n = ["i","ii","iii","iv","x"]
