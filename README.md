@@ -6,9 +6,9 @@ The meaning of the columns in gene_idx.txt is as following:
 
 (2) : HUGO genename, ref: https://www.genenames.org/
 
-2.file discription of global_files/gene_label.txt
+2.file discription of global_files/gene_label.dat
 
-The meaning of the columns in gene_label.txt is as following:
+The meaning of the columns in gene_label.dat is as following:
 
 (1) : gene_index, the same as gene_idx.txt
 

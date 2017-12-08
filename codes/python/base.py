@@ -173,6 +173,6 @@ def generate_gene_index(gene_idx_fp, gene_label_fp):
 
 #some global variables
 gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
-gene_label_path = os.path.join(global_files_dir, "gene_label.txt")
+gene_label_path = os.path.join(global_files_dir, "gene_label.dat")
 if __name__ == '__main__':
     generate_gene_index(gene_idx_path, gene_label_path)
