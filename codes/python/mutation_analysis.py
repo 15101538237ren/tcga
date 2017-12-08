@@ -222,15 +222,6 @@ def calc_mutation_rate():
             mutation_rate_sorted_file.write("\n".join(ltws))
         print "finish %s" % cancer_name
 
-def judge_gene_in_CGI(gene_idx_filepath, CGI_genenames_filepath, output_filepath):
-    gene_names = read_tab_seperated_file_and_get_target_column(1, gene_idx_filepath)
-    gene_cgis =[0 for item in gene_names]
-    cgi_gene_names =[item.strip("\"") for item in read_tab_seperated_file_and_get_target_column(0, CGI_genenames_filepath)]
-    for gidx, gene_name in enumerate(gene_names):
-        if gene_name in cgi_gene_names:
-            gene_cgis[gidx] = 1
-    write_tab_seperated_file_for_a_list(output_filepath,gene_cgis, index_included=True)
-
 is_merge_stage = False
 dname = "merged_stage" if is_merge_stage else "stage"
 for cancer_name in cancer_names:
@@ -252,7 +243,5 @@ for cancer_name in cancer_names:
 if __name__ == '__main__':
     dna_mutation_data_transform_pipline(is_merge_stage)
     # calc_mutation_rate()
-    # CGI_genenames_filepath = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
-    # output_filepath = os.path.join(global_files_dir, "gene_id_with_cgi.dat")
-    # judge_gene_in_CGI(gene_idx_path, CGI_genenames_filepath, output_filepath)
+    #
     pass

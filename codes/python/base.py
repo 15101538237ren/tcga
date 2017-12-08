@@ -91,6 +91,16 @@ def read_tab_seperated_file_and_get_target_column(target_col_index, input_file_p
             ret_value_list.append(led)
             line = input_file.readline()
     return ret_value_list
+
+#label whether a gene in GENOME contains a CGI, 1 contained, 0 non-contained
+def label_cgi_genes(CGI_genenames_filepath):
+    gene_cgi_labels =[0 for item in GENOME]
+    cgi_gene_names =[item.strip("\"") for item in read_tab_seperated_file_and_get_target_column(0, CGI_genenames_filepath)]
+    for gidx, gene_name in enumerate(GENOME):
+        if gene_name in cgi_gene_names:
+            gene_cgi_labels[gidx] = 1
+    return gene_cgi_labels
+# for an alias file, output all key and its alias as a list
 def read_alias_file_and_output_keys_list(input_fp):
     rtn_keys = []
     with open(input_fp,'r') as input_file:
@@ -107,6 +117,7 @@ def read_alias_file_and_output_keys_list(input_fp):
                         rtn_keys.append(alias_name)
             line = input_file.readline()
     return rtn_keys
+
 #input_onco_fp: filepath of onco_gene_file input_tsg_fp: filepath of tumor_suppressed_gene_file, gene_category(0: other, 1: onco, 2: tsg)
 def label_TSG_or_OncoGene(input_onco_fp, input_tsg_fp):
     gene_categorys = [0 for item in GENOME]
@@ -118,10 +129,14 @@ def label_TSG_or_OncoGene(input_onco_fp, input_tsg_fp):
         elif item in tsg_keys:
             gene_categorys[gidx] = 2
     return gene_categorys
+
 origin_onco_fp = os.path.join(global_files_dir, "OncoGene_698.tsv")
 origin_tsg_fp = os.path.join(global_files_dir, "TSG_1018.tsv")
 
 gene_categorys = label_TSG_or_OncoGene(origin_onco_fp, origin_tsg_fp)
+
+CGI_genenames_filepath = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
+gene_cgi_labels = label_cgi_genes(CGI_genenames_filepath)
 
 #生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg)
 def generate_gene_index(gene_idx_path):
