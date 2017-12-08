@@ -124,32 +124,49 @@ def label_TSG_or_OncoGene(input_onco_fp, input_tsg_fp):
     onco_keys = read_alias_file_and_output_keys_list(input_onco_fp)
     tsg_keys = read_alias_file_and_output_keys_list(input_tsg_fp)
     for gidx, item in enumerate(GENOME):
+        gc_nm = 0
         if item in onco_keys:
             gene_categorys[gidx] = 1
-        elif item in tsg_keys:
+            gc_nm += 1
+        if item in tsg_keys:
             gene_categorys[gidx] = 2
+            gc_nm += 1
+        if gc_nm == 2:
+            gene_categorys[gidx] = 3
     return gene_categorys
 
+#label whether a gene of GENOME is a TF gene
+def label_TF_genes(input_tf_fp):
+    tf_labels = [0 for item in GENOME]
+    tf_genes = read_tab_seperated_file_and_get_target_column(0,tf_genes_fp)
+    for tidx, gene_name in enumerate(GENOME):
+        if gene_name in tf_genes:
+            tf_labels[tidx] = 1
+    return tf_labels
 origin_onco_fp = os.path.join(global_files_dir, "OncoGene_698.tsv")
 origin_tsg_fp = os.path.join(global_files_dir, "TSG_1018.tsv")
 
 gene_categorys = label_TSG_or_OncoGene(origin_onco_fp, origin_tsg_fp)
 
-CGI_genenames_filepath = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
-gene_cgi_labels = label_cgi_genes(CGI_genenames_filepath)
-
-#生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg)
-def generate_gene_index(gene_idx_path):
+CGI_genenames_fp = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
+gene_cgi_labels = label_cgi_genes(CGI_genenames_fp)
 
 
+tf_genes_fp = os.path.join(global_files_dir, "TF_gene_list.txt")
+tf_gene_labels = label_TF_genes(tf_genes_fp)
 
-    with open(gene_idx_path,"w") as gene_idx_file:
-        gene_idx_file.write("\n".join([str(gidx+1) + "\t" + gene for gidx, gene in enumerate(GENOME)]))
+#生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg 3: onco_and_tsg)
+def generate_gene_index(gene_idx_fp):
+    with open(gene_idx_fp,"w") as gene_idx_file:
+        ltws = []
+        for gidx, gene in enumerate(GENOME):
+            ltw = "\t".join([str(gidx + 1), gene, str(gene_cgi_labels[gidx]), str(tf_gene_labels[gidx]), str(gene_categorys[gidx])])
+            ltws.append(ltw)
+        gene_idx_file.write("\n".join(ltws))
+    print "generate_gene_index successful at %s" % gene_idx_fp
 
 #some global variables
 gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
-if not os.path.exists(gene_idx_path):
-    generate_gene_index(gene_idx_path)
 
 if __name__ == '__main__':
-    pass
+    generate_gene_index(gene_idx_path)
