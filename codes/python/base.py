@@ -28,6 +28,8 @@ metadata_dir = os.path.join(intermediate_file_dir, "metadata")
 
 methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate")
 snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
+rna_intermidiate_dir = os.path.join(intermediate_file_dir, "rna_intermidiate")
+
 dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir]
 for dir_name in dirs:
     if not os.path.exists(dir_name):
