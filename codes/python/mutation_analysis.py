@@ -191,7 +191,7 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
 def calc_mutation_rate():
     cancer_stage = "i"
     for cancer_name in cancer_names:
-        output_cancer_dir = os.path.join(snv_intermidiate_dir, cancer_name)
+        output_cancer_dir = os.path.join(snv_intermidiate_dir, "merged_stage", cancer_name)
         mutation_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_data.dat")
         out_mutation_rate_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate.txt")
         out_mutation_rate_sorted_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate_sorted.txt")
@@ -251,7 +251,7 @@ for cancer_name in cancer_names:
 
 if __name__ == '__main__':
     dna_mutation_data_transform_pipline(is_merge_stage)
-    calc_mutation_rate()
+    # calc_mutation_rate()
     # CGI_genenames_filepath = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
     # output_filepath = os.path.join(global_files_dir, "gene_id_with_cgi.dat")
     # judge_gene_in_CGI(gene_idx_path, CGI_genenames_filepath, output_filepath)

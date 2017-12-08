@@ -91,9 +91,43 @@ def read_tab_seperated_file_and_get_target_column(target_col_index, input_file_p
             ret_value_list.append(led)
             line = input_file.readline()
     return ret_value_list
+def read_alias_file_and_output_keys_list(input_fp):
+    rtn_keys = []
+    with open(input_fp,'r') as input_file:
+        line = input_file.readline()
+        while line:
+            contents = line.split("\t")
+            gene_name = contents[0]
+            rtn_keys.append(gene_name)
+            if len(contents) > 1:
+                content1 = contents[1].strip("\n")
+                alias = content1.split("|")
+                if len(alias) and alias[0] != "":
+                    for alias_name in alias:
+                        rtn_keys.append(alias_name)
+            line = input_file.readline()
+    return rtn_keys
+#input_onco_fp: filepath of onco_gene_file input_tsg_fp: filepath of tumor_suppressed_gene_file, gene_category(0: other, 1: onco, 2: tsg)
+def label_TSG_or_OncoGene(input_onco_fp, input_tsg_fp):
+    gene_categorys = [0 for item in GENOME]
+    onco_keys = read_alias_file_and_output_keys_list(input_onco_fp)
+    tsg_keys = read_alias_file_and_output_keys_list(input_tsg_fp)
+    for gidx, item in enumerate(GENOME):
+        if item in onco_keys:
+            gene_categorys[gidx] = 1
+        elif item in tsg_keys:
+            gene_categorys[gidx] = 2
+    return gene_categorys
+origin_onco_fp = os.path.join(global_files_dir, "OncoGene_698.tsv")
+origin_tsg_fp = os.path.join(global_files_dir, "TSG_1018.tsv")
 
-#生成全局统一的gene_index_file
+gene_categorys = label_TSG_or_OncoGene(origin_onco_fp, origin_tsg_fp)
+
+#生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg)
 def generate_gene_index(gene_idx_path):
+
+
+
     with open(gene_idx_path,"w") as gene_idx_file:
         gene_idx_file.write("\n".join([str(gidx+1) + "\t" + gene for gidx, gene in enumerate(GENOME)]))
 
@@ -102,38 +136,5 @@ gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
 if not os.path.exists(gene_idx_path):
     generate_gene_index(gene_idx_path)
 
-def label_TSG_or_OncoGene(input_fp, output_fp):
-    out_gene_list = []
-    now_file = open(input_fp,'r')
-    line = now_file.readline()
-    while line:
-        contents = line.split("\t")
-        gene_name = contents[0]
-        flag = False
-        if gene_name in GENOME:
-            flag = True
-            out_gene_list.append(gene_name)
-        if len(contents) > 1 and not flag:
-            content1 = contents[1].strip("\n")
-            alias = content1.split("|")
-            if len(alias) and alias[0] != "":
-                for alias_name in alias:
-                    if alias_name in GENOME:
-                        flag = True
-                        out_gene_list.append(alias_name)
-                        break
-        line = now_file.readline()
-    write_tab_seperated_file_for_a_list(output_fp,out_gene_list,index_included=True)
-origin_tsg_fp = os.path.join(global_files_dir, "TSG_1018.tsv")
-origin_onco_fp = os.path.join(global_files_dir, "OncoGene_698.tsv")
-
-tsg_index_fp = os.path.join(global_files_dir, "tsg_gene_idx.txt")
-onco_index_fp = os.path.join(global_files_dir, "onco_gene_idx.txt")
-
-if not os.path.exists(tsg_index_fp):
-    label_TSG_or_OncoGene(origin_tsg_fp,tsg_index_fp)
-
-if not os.path.exists(onco_index_fp):
-    label_TSG_or_OncoGene(origin_onco_fp,onco_index_fp)
 if __name__ == '__main__':
     pass
