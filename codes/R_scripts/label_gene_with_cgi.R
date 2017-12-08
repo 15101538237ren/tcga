@@ -23,5 +23,5 @@ merged_gene_df<-merge(cpg_anno_df, gene_dataframe_orgDb, by.x="feature", by.y="E
 merged_gene_df<-merged_gene_df[merged_gene_df$shortestDistance<1500L,]
 gene_names_with_CGI<-as.data.frame(unique(merged_gene_df$HGNC_orgDb))
 
-data_path = "~/PycharmProjects/tcga/global_files/"
-write.table(gene_names_with_CGI[ , 1], file= paste(data_path, "gene_names_with_CGI.txt",sep = ""),row.names = FALSE,col.names=FALSE,qmethod = "double", sep="\t")
+data_path = "~/PycharmProjects/tcga/others/doc/"
+write.table(merged_gene_df, file= paste(data_path, "cgi_info.txt",sep = ""),row.names = FALSE,col.names=TRUE,qmethod = "double", sep="\t")
