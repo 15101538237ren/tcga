@@ -1,4 +1,4 @@
-1 file discription of global_files/gene_idx.txt
+1. file discription of global_files/gene_idx.txt
 
 The meaning of the columns in gene_idx.txt is as following:
 
