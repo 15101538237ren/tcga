@@ -4,7 +4,7 @@ import numpy as np
 from base import *
 fpkm_file_end = ".FPKM.txt"
 
-is_merge_stage = True
+is_merge_stage = False
 dname = "merged_stage" if is_merge_stage else "stage"
 # 获得每种癌症的htseq-count数据的文件名列表
 def obtain_fpkm_filelist():
@@ -209,33 +209,34 @@ def generate_tpm_table_for_each_cancer_and_each_stage():
             out_stage_tpm_data_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_tpm.dat")
             out_stage_fpkm_data_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_fpkm.dat")
             fpkm_case_id_list = stage_to_its_fpkm[stage]
-            write_tab_seperated_file_for_a_list(os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_case_ids.txt"), fpkm_case_id_list, index_included=True)
-            print "cancer %s, stage %s, #cases %d" %(cancer_name, stage, len(fpkm_case_id_list))
+            if len(fpkm_case_id_list):
+                write_tab_seperated_file_for_a_list(os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_case_ids.txt"), fpkm_case_id_list, index_included=True)
+                print "cancer %s, stage %s, #cases %d" %(cancer_name, stage, len(fpkm_case_id_list))
 
-            tpm_matrix = [gene_idxs]
-            fpkm_matrix = [gene_idxs]
-            for fidx ,fpkm_case_id in enumerate(fpkm_case_id_list):
-                fpkm_filepath = os.path.join(cancer_data_dir, fpkm_case_id + fpkm_file_end)
-                [fpkm_values_dict, tpm_values_dict] = compute_tpm_for_a_fpkm_file(fpkm_filepath)
-                filtered_tpm_values = [fidx + 1]
-                filtered_fpkm_values = [fidx + 1]
+                tpm_matrix = [gene_idxs]
+                fpkm_matrix = [gene_idxs]
+                for fidx ,fpkm_case_id in enumerate(fpkm_case_id_list):
+                    fpkm_filepath = os.path.join(cancer_data_dir, fpkm_case_id + fpkm_file_end)
+                    [fpkm_values_dict, tpm_values_dict] = compute_tpm_for_a_fpkm_file(fpkm_filepath)
+                    filtered_tpm_values = [fidx + 1]
+                    filtered_fpkm_values = [fidx + 1]
 
-                for gene_idx_ensembl_name in gene_idx_ensembl_names:
-                  if gene_idx_ensembl_name == "-":
-                      filtered_tpm_values.append(-1)
-                      filtered_fpkm_values.append(-1)
-                  else:
-                      filtered_tpm_values.append(tpm_values_dict[gene_idx_ensembl_name])
-                      filtered_fpkm_values.append(fpkm_values_dict[gene_idx_ensembl_name])
-                tpm_matrix.append(np.array(filtered_tpm_values))
-                fpkm_matrix.append(np.array(filtered_fpkm_values))
-                print "cancer_name %s\tstage %s\ttpm %d / %d" % ( cancer_name, stage, fidx + 1, len(fpkm_case_id_list))
-            tpm_matrix = np.array(tpm_matrix).transpose()
-            fpkm_matrix = np.array(fpkm_matrix).transpose()
+                    for gene_idx_ensembl_name in gene_idx_ensembl_names:
+                      if gene_idx_ensembl_name == "-":
+                          filtered_tpm_values.append(-1)
+                          filtered_fpkm_values.append(-1)
+                      else:
+                          filtered_tpm_values.append(tpm_values_dict[gene_idx_ensembl_name])
+                          filtered_fpkm_values.append(fpkm_values_dict[gene_idx_ensembl_name])
+                    tpm_matrix.append(np.array(filtered_tpm_values))
+                    fpkm_matrix.append(np.array(filtered_fpkm_values))
+                    print "cancer_name %s\tstage %s\ttpm %d / %d" % ( cancer_name, stage, fidx + 1, len(fpkm_case_id_list))
+                tpm_matrix = np.array(tpm_matrix).transpose()
+                fpkm_matrix = np.array(fpkm_matrix).transpose()
 
-            np.savetxt(out_stage_tpm_data_path, tpm_matrix, delimiter="\t")
-            np.savetxt(out_stage_fpkm_data_path, fpkm_matrix, delimiter="\t")
-            print "save %s stage tpm data successful!" % stage
+                np.savetxt(out_stage_tpm_data_path, tpm_matrix, delimiter="\t")
+                np.savetxt(out_stage_fpkm_data_path, fpkm_matrix, delimiter="\t")
+                print "save %s stage tpm data successful!" % stage
 if __name__ == '__main__':
     generate_tpm_table_for_each_cancer_and_each_stage()
     pass
