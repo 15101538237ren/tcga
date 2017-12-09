@@ -187,7 +187,6 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
                             data_str.append("\t".join([str(item) for item in arr]))
                         data_file.write("\n".join(data_str))
 
-
 def calc_mutation_rate():
     cancer_stage = "i"
     for cancer_name in cancer_names:

@@ -2,9 +2,9 @@
 import os, json
 import numpy as np
 from base import *
-fpkm_file_end = "FPKM.txt"
+fpkm_file_end = ".FPKM.txt"
 
-is_merge_stage = False
+is_merge_stage = True
 dname = "merged_stage" if is_merge_stage else "stage"
 # 获得每种癌症的htseq-count数据的文件名列表
 def obtain_fpkm_filelist():
@@ -125,22 +125,21 @@ def obtain_gene_symbols_and_emsembl_ids_from_gtf(gene_ids_filepath, gtf_filepath
     print "finished handling gtf file, now writing gene_symbols to %s" % outfile_path
     write_tab_seperated_file_for_a_list(outfile_path, gene_symbols, index_included=True)
 
-def connect_whole_genome_to_ensembl_gene_symbol_index(whole_gene_idx_filepath , ensembl_gene_symbol_index_path, out_correspondent_index_path):
-    whole_genome = read_tab_seperated_file_and_get_target_column(1, whole_gene_idx_filepath)
+def connect_whole_genome_to_ensembl_gene_symbol_index(ensembl_gene_symbol_index_path, out_correspondent_index_path):
     ensembl_gene_symbols = read_tab_seperated_file_and_get_target_column(1, ensembl_gene_symbol_index_path)
 
     #利用基因名查在全基因组中的index
-    whole_gene_index_dict = {gene_name: (gindex + 1) for gindex, gene_name in enumerate(whole_genome)}
+    whole_gene_index_dict = {gene_name: (gindex + 1) for gindex, gene_name in enumerate(GENOME)}
 
     #给出全基因组中所有基因对应ensembl_gene_symbols文件中该基因的行号, -1代表没有该基因对应的gene_symbol
-    ret_index_dict = {(gindex + 1): -1 for gindex, gene_name in enumerate(whole_genome)}
+    ret_index_dict = {(gindex + 1): -1 for gindex, gene_name in enumerate(GENOME)}
 
     for gindex2, gene_symbol in enumerate(ensembl_gene_symbols):
         if (gene_symbol != "-") and (gene_symbol in alias_dict.keys()):
             gene_name = alias_dict[gene_symbol]
             if gene_name in whole_gene_index_dict.keys():
                 origin_gene_idx_in_whole_genome_file = whole_gene_index_dict[gene_name]
-                ret_index_dict[origin_gene_idx_in_whole_genome_file] = gindex2
+                ret_index_dict[origin_gene_idx_in_whole_genome_file] = gindex2 + 1
     ordered_dict= sorted(ret_index_dict.items(), key=lambda d:d[0])
 
     with open(out_correspondent_index_path, "w") as out_correspondent_index_file:
@@ -169,50 +168,54 @@ if not os.path.exists(gene_symbols_filepath):
     generate_ensembl_gene_ids_in_a_fpkm_file()
     obtain_gene_symbols_and_emsembl_ids_from_gtf(emsembl_ids_filepath, gtf_filepath, gene_symbols_filepath)
 
-# correspondent_index_path = os.path.join(rna_intermidiate_dir, dname, "correspondent_index.txt")
-# if not os.path.exists(correspondent_index_path):
-#     connect_whole_genome_to_ensembl_gene_symbol_index(gene_idx_path, gene_symbols_filepath,correspondent_index_path)
+correspondent_index_path = os.path.join(rna_intermidiate_dir, dname, "correspondent_index.txt")
+if not os.path.exists(correspondent_index_path):
+    connect_whole_genome_to_ensembl_gene_symbol_index(gene_symbols_filepath, correspondent_index_path)
 
 
 def generate_tpm_table_for_each_cancer_and_each_stage():
     correspondent_indexs = [int(value) for value in read_tab_seperated_file_and_get_target_column(1 , correspondent_index_path)]
-    gene_idxs = np.array([ item for item in range(len(correspondent_indexs) + 1)])
+    gene_idxs = np.array([item for item in range(len(GENOME) + 1)])
+    stage_list = merged_stage if is_merge_stage else tumor_stages
     for cancer_name in cancer_names:
         cancer_data_dir = os.path.join(rna_data_dir, cancer_name)
-        output_cancer_dir = os.path.join(rna_intermidiate_dir, cancer_name)
-        htseq_filelist_path = os.path.join(output_cancer_dir, cancer_name + "_htseq_filelist.txt")
+        output_cancer_dir = os.path.join(rna_intermidiate_dir, dname, cancer_name)
+        fpkm_filelist_path = os.path.join(output_cancer_dir, cancer_name + "_fpkm_filelist.txt")
         stages_path = os.path.join(output_cancer_dir, cancer_name + "_stages.txt")
 
-        htseq_filenames = read_tab_seperated_file_and_get_target_column(1, htseq_filelist_path)
-        htseq_case_ids = [htseq_filename[0 : -13] for htseq_filename in htseq_filenames]
+        fpkm_filenames = read_tab_seperated_file_and_get_target_column(1, fpkm_filelist_path)
+        fpkm_case_ids = [fpkm_filename[0 : -9] for fpkm_filename in fpkm_filenames]
         stages = read_tab_seperated_file_and_get_target_column(1, stages_path)
-        stage_to_its_htseq = { stage: [] for stage in merged_stage}
-        for hidx, htseq_case_id in enumerate(htseq_case_ids):
+
+        stage_to_its_fpkm = { stage: [] for stage in stage_list}
+
+        for hidx, fpkm_case_id in enumerate(fpkm_case_ids):
             stage = stages[hidx]
-            stage_to_its_htseq[stage].append(htseq_case_id)
-        for stage in merged_stage:
+            stage_to_its_fpkm[stage].append(fpkm_case_id)
+
+        for stage in stage_list:
             out_stage_tpm_data_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_tpm.dat")
 
-            htseq_case_id_list = stage_to_its_htseq[stage]
-            write_tab_seperated_file_for_a_list(os.path.join(output_cancer_dir, stage + "_case_ids.txt"), htseq_case_id_list, index_included=True)
+            fpkm_case_id_list = stage_to_its_fpkm[stage]
+            write_tab_seperated_file_for_a_list(os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_case_ids.txt"), fpkm_case_id_list, index_included=True)
 
-            print "%s, %s, %d" %(cancer_name, stage, len(htseq_case_id_list))
+            print "cancer %s, stage %s, #cases %d" %(cancer_name, stage, len(fpkm_case_id_list))
             tpm_matrix = [gene_idxs]
-            for hidx ,htseq_case_id in enumerate(htseq_case_id_list):
-                fpkm_filepath = os.path.join(cancer_data_dir, htseq_case_id + ".FPKM.txt")
+            for fidx ,fpkm_case_id in enumerate(fpkm_case_id_list):
+                fpkm_filepath = os.path.join(cancer_data_dir, fpkm_case_id + fpkm_file_end)
                 tpm_values = compute_tpm_for_a_htseq_count_file(fpkm_filepath)
-                filtered_tpm_values = [hidx + 1]
+                filtered_tpm_values = [fidx + 1]
                 for correspondent_index in correspondent_indexs:
                   if correspondent_index < 0:
                       filtered_tpm_values.append(-1)
                   else:
                       filtered_tpm_values.append(tpm_values[correspondent_index - 1])
                 tpm_matrix.append(np.array(filtered_tpm_values))
-                print "%s\t%s\ttpm %d / %d" % ( cancer_name, stage, hidx + 1, len(htseq_case_id_list))
+                print "cancer_name %s\tstage %s\ttpm %d / %d" % ( cancer_name, stage, fidx + 1, len(fpkm_case_id_list))
             tpm_matrix = np.array(tpm_matrix).transpose()
             np.savetxt(out_stage_tpm_data_path, tpm_matrix, delimiter="\t")
             print "save %s stage tpm data successful!" % stage
 if __name__ == '__main__':
+    generate_tpm_table_for_each_cancer_and_each_stage()
     pass
-    # generate_tpm_table_for_each_cancer_and_each_stage()
 

@@ -7,8 +7,6 @@ methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.t
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
 tumor_suppressed_gene_filepath = os.path.join(global_files_dir, "gene_with_protein_product.tsv")
 
-methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
-
 tumor_stages_xaxis = {}
 for idx, item in enumerate(tumor_stages):
     tumor_stages_xaxis[item] = idx + 1
@@ -16,7 +14,9 @@ for idx, item in enumerate(tumor_stages):
 tumor_stages_xaxis2 = {}
 for idx, item in enumerate(merged_stage):
     tumor_stages_xaxis2[item] = idx + 1
-
+is_merge_stage = True
+stage_list = merged_stage if is_merge_stage else tumor_stages
+dname = "merged_stage" if is_merge_stage else "stage"
 # 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
 def connect_filename_to_uuid():
     uuid_to_filename = {}
@@ -293,7 +293,6 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
 #将某癌症数据写入到tsv文件中
 def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
     [profile, profile_uuid] = profile_list
-    stage_list = merged_stage if is_merge_stage else tumor_stages
     for stage_idx, stage_name in enumerate(stage_list):
         output_cancer_dir = outdir
         if not os.path.exists(output_cancer_dir):
@@ -348,6 +347,55 @@ def print_samplesize_of_each_cancer(sample_count_filepath):
 
     with open(sample_count_filepath,"w") as sample_count_file:
         sample_count_file.write("\n".join(ltws))
+
+def calc_cancer_means_and_stds_for_genome(cancer_name, cancer_profile_arr, stage_list, cancer_mean_std_dir):
+    cancer_profile = cancer_profile_arr[0]
+    len_stages = len(cancer_profile["APC"]) - 1 #去掉not reported
+    stage_names =[stage_list[item] for item in range(len_stages)]
+
+    out_stages_fp = os.path.join(cancer_mean_std_dir, cancer_name + "_stages.txt")
+    write_tab_seperated_file_for_a_list(out_stages_fp, stage_names, index_included=True)
+
+    mean_arr = [[] for item in GENOME]
+    std_arr = [[] for item in GENOME]
+    for gidx, gene in enumerate(GENOME):
+        for sidx, stage_name in enumerate(stage_names):
+            methy_of_this_gene = cancer_profile[gene][sidx]
+            mean_arr[gidx].append(np.array(methy_of_this_gene).mean())
+            std_arr[gidx].append(np.array(methy_of_this_gene).std())
+
+    out_mean_fp = os.path.join(cancer_mean_std_dir, cancer_name + "_mean.dat")
+    out_std_fp = os.path.join(cancer_mean_std_dir, cancer_name + "_std.dat")
+
+    header = "\t".join([str(item) for item in range(len_stages + 1)])
+
+    with open(out_mean_fp, "w") as data_file:
+        ltws = [header]
+        for gidx, gene in enumerate(GENOME):
+            arr = [str(gidx + 1)]
+            arr.extend(["-1" if str(mean_arr[gidx][sidx]) == "nan" else str(mean_arr[gidx][sidx]) for sidx in range(len_stages)])
+            ltws.append("\t".join(arr))
+        data_file.write("\n".join(ltws))
+
+    with open(out_std_fp, "w") as data_file:
+        ltws = [header]
+        for gidx, gene in enumerate(GENOME):
+            arr = [str(gidx + 1)]
+            arr.extend(["-1" if str(std_arr[gidx][sidx]) == "nan" else str(std_arr[gidx][sidx]) for sidx in range(len_stages)])
+            ltws.append("\t".join(arr))
+        data_file.write("\n".join(ltws))
+
+def dump_stage_std_and_mean_pipline():
+    for cancer_name in cancer_names:
+        data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
+        pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
+        temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
+        new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
+        profile_list = new_profile_list if is_merge_stage else temp_profile_list
+        cancer_mean_std_dir = os.path.join(methy_mean_std_dir, dname, cancer_name)
+        if not os.path.exists(cancer_mean_std_dir):
+            os.makedirs(cancer_mean_std_dir)
+        calc_cancer_means_and_stds_for_genome(cancer_name, profile_list, stage_list, cancer_mean_std_dir)
 #生成dna甲基化的dat文件
 def dump_data_into_dat_according_to_cancer_type_and_stage_pipepile():
     for cancer_name in cancer_names:
@@ -356,14 +404,14 @@ def dump_data_into_dat_according_to_cancer_type_and_stage_pipepile():
         pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
         temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
         new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-        is_merge_stage = False
         profile_list = new_profile_list if is_merge_stage else temp_profile_list
-        dname = "merged_stage" if is_merge_stage else "stage"
+
         out_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
+# 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
     for cancer_name in cancer_names:
@@ -388,5 +436,5 @@ if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    dump_data_into_dat_according_to_cancer_type_and_stage_pipepile()
+    dump_stage_std_and_mean_pipline()
     pass
