@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-import os, json
+import os, json,collections
 import numpy as np
 from base import *
 fpkm_file_end = ".FPKM.txt"
@@ -89,13 +89,18 @@ def generate_ensembl_gene_ids_in_a_fpkm_file():
             break
 
     ensembl_gene_ids = read_tab_seperated_file_and_get_target_column(0, first_fpkm_file_path)
-    outfile_path = os.path.join(rna_intermidiate_dir, dname, "ensembl_gene_ids.txt")
-    write_tab_seperated_file_for_a_list(outfile_path, ensembl_gene_ids, index_included=False)
+    return ensembl_gene_ids
 
-# 根据基因列表文件和gtf注释文件,将gene_id与gene_name进行match,之后输出到gene_symbols.txt中,该文件的索引与gene_id的索引一一对应
-def obtain_gene_symbols_and_emsembl_ids_from_gtf(gene_ids_filepath, gtf_filepath, outfile_path):
-    ensembl_gene_ids = read_tab_seperated_file_and_get_target_column(0, gene_ids_filepath)
-    ensembl_gene_id_to_gene_symbol_dict = {}
+#根据gtf文件,建立对应gene_idx索引的ensembl_gene_id
+def build_ensembl_index_from_gtf(ensembl_gene_ids, gtf_filepath, gene_ids_filepath):
+    ensembl_gene_idx_values = ["-" for item in GENOME]
+
+    gene_idxs_dict = collections.OrderedDict()
+    for gidx, gname in enumerate(GENOME):
+        if not gname in gene_idxs_dict.keys():
+            gene_idxs_dict[gname] = [gidx]
+        else:
+            gene_idxs_dict[gname].append(gidx)
 
     gtf_file = open(gtf_filepath , "r")
     for i in range(5):
@@ -112,19 +117,13 @@ def obtain_gene_symbols_and_emsembl_ids_from_gtf(gene_ids_filepath, gtf_filepath
                 [k , v] = item.strip().split(" ")
                 group_dict[k] = v.replace('\"',"")
             if "gene_type" in group_dict.keys() and group_dict["gene_type"] == "protein_coding":
-                if ("gene_id" in group_dict.keys()) and ("gene_name" in group_dict.keys()):
-                    ensembl_gene_id_to_gene_symbol_dict[group_dict["gene_id"]] = group_dict["gene_name"]
+                gene_name = group_dict["gene_name"]
+                if ("gene_id" in group_dict.keys()) and ("gene_name" in group_dict.keys()) and (gene_name in gene_idxs_dict.keys()):
+                    g_idxs =  gene_idxs_dict[gene_name]
+                    for g_idx in g_idxs:
+                        ensembl_gene_idx_values[g_idx] = group_dict["gene_id"]
         line = gtf_file.readline()
-    gene_symbols = []
-    for ensembl_gene_id in ensembl_gene_ids:
-        if ensembl_gene_id in ensembl_gene_id_to_gene_symbol_dict.keys():
-            gene_symbol = ensembl_gene_id_to_gene_symbol_dict[ensembl_gene_id]
-        else:
-            gene_symbol = "-"
-        gene_symbols.append(gene_symbol)
-    print "finished handling gtf file, now writing gene_symbols to %s" % outfile_path
-    write_tab_seperated_file_for_a_list(outfile_path, gene_symbols, index_included=True)
-
+    write_tab_seperated_file_for_a_list(gene_ids_filepath,ensembl_gene_idx_values,index_included=True)
 def connect_whole_genome_to_ensembl_gene_symbol_index(ensembl_gene_symbol_index_path, out_correspondent_index_path):
     ensembl_gene_symbols = read_tab_seperated_file_and_get_target_column(1, ensembl_gene_symbol_index_path)
 
@@ -150,33 +149,46 @@ def connect_whole_genome_to_ensembl_gene_symbol_index(ensembl_gene_symbol_index_
     print "connect_whole_genome_to_ensembl_gene_symbol_index successful"
 
 #计算一个fpkm文件中每个基因的tpm值
-def compute_tpm_for_a_htseq_count_file(fpkm_file_path):
-    fpkm_values = [float(value) for value in read_tab_seperated_file_and_get_target_column(1, fpkm_file_path)]
-    # sum_of_fpkm = float(np.array(fpkm_values).sum())
-    # tpm_values = [(fpkm_value / sum_of_fpkm) * 1000000.0 for fpkm_value in fpkm_values]
-    return fpkm_values#tpm_values
+def compute_tpm_for_a_fpkm_file(fpkm_file_path):
+    fpkm_dict = {}
+    with open(fpkm_file_path, "r") as input_file:
+        line = input_file.readline()
+        while line:
+            line_contents = line.split("\t")
+            ensemble_id = line_contents[0]
+            fpkm_value = float(line_contents[1].strip("\n"))
+            fpkm_dict[ensemble_id] = fpkm_value
+            line = input_file.readline()
+    sum_of_fpkm = float(np.array(fpkm_dict.values()).sum())
+    tpm_dict = {ensemble_id: (fpkm_value / sum_of_fpkm) * 1000000.0 for (ensemble_id, fpkm_value) in fpkm_dict.items()}
+    return [fpkm_dict, tpm_dict]
 
 #some global variables
 
-gene_symbols_filepath = os.path.join(rna_intermidiate_dir, dname, "gene_symbols.txt")
-emsembl_ids_filepath = os.path.join(rna_intermidiate_dir, dname, "ensembl_gene_ids.txt")
+for cancer_name in cancer_names:
+    output_cancer_dir = os.path.join(rna_intermidiate_dir, dname, cancer_name)
+    fpkm_file_list_path = os.path.join(output_cancer_dir, cancer_name + "_fpkm_filelist.txt")
+    if not os.path.exists(fpkm_file_list_path):
+        obtain_fpkm_filelist()
+        break
+
+for cancer_name in cancer_names:
+    output_cancer_dir = os.path.join(rna_intermidiate_dir, dname, cancer_name)
+    stage_path =os.path.join(output_cancer_dir, cancer_name + "_stages.txt")
+    if not os.path.exists(stage_path):
+        obtain_stage_info_from_metadata()
+        break
+
+emsembl_ids_filepath = os.path.join(rna_intermidiate_dir, dname, "ensembl_id_idx.txt")
 gtf_filepath = os.path.join(GRCh38_dir, "gencode.v22.annotation.gtf")
-
-if not os.path.exists(gene_symbols_filepath):
-    obtain_fpkm_filelist()
-    obtain_stage_info_from_metadata()
-    generate_ensembl_gene_ids_in_a_fpkm_file()
-    obtain_gene_symbols_and_emsembl_ids_from_gtf(emsembl_ids_filepath, gtf_filepath, gene_symbols_filepath)
-
-correspondent_index_path = os.path.join(rna_intermidiate_dir, dname, "correspondent_index.txt")
-if not os.path.exists(correspondent_index_path):
-    connect_whole_genome_to_ensembl_gene_symbol_index(gene_symbols_filepath, correspondent_index_path)
-
+if not os.path.exists(emsembl_ids_filepath):
+    ensembl_gene_ids = generate_ensembl_gene_ids_in_a_fpkm_file()
+    build_ensembl_index_from_gtf(ensembl_gene_ids, gtf_filepath, emsembl_ids_filepath)
 
 def generate_tpm_table_for_each_cancer_and_each_stage():
-    correspondent_indexs = [int(value) for value in read_tab_seperated_file_and_get_target_column(1 , correspondent_index_path)]
     gene_idxs = np.array([item for item in range(len(GENOME) + 1)])
     stage_list = merged_stage if is_merge_stage else tumor_stages
+    gene_idx_ensembl_names = read_tab_seperated_file_and_get_target_column(1,emsembl_ids_filepath)
     for cancer_name in cancer_names:
         cancer_data_dir = os.path.join(rna_data_dir, cancer_name)
         output_cancer_dir = os.path.join(rna_intermidiate_dir, dname, cancer_name)
@@ -195,25 +207,34 @@ def generate_tpm_table_for_each_cancer_and_each_stage():
 
         for stage in stage_list:
             out_stage_tpm_data_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_tpm.dat")
-
+            out_stage_fpkm_data_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_fpkm.dat")
             fpkm_case_id_list = stage_to_its_fpkm[stage]
             write_tab_seperated_file_for_a_list(os.path.join(output_cancer_dir, cancer_name + "_" + stage + "_case_ids.txt"), fpkm_case_id_list, index_included=True)
-
             print "cancer %s, stage %s, #cases %d" %(cancer_name, stage, len(fpkm_case_id_list))
+
             tpm_matrix = [gene_idxs]
+            fpkm_matrix = [gene_idxs]
             for fidx ,fpkm_case_id in enumerate(fpkm_case_id_list):
                 fpkm_filepath = os.path.join(cancer_data_dir, fpkm_case_id + fpkm_file_end)
-                tpm_values = compute_tpm_for_a_htseq_count_file(fpkm_filepath)
+                [fpkm_values_dict, tpm_values_dict] = compute_tpm_for_a_fpkm_file(fpkm_filepath)
                 filtered_tpm_values = [fidx + 1]
-                for correspondent_index in correspondent_indexs:
-                  if correspondent_index < 0:
+                filtered_fpkm_values = [fidx + 1]
+
+                for gene_idx_ensembl_name in gene_idx_ensembl_names:
+                  if gene_idx_ensembl_name == "-":
                       filtered_tpm_values.append(-1)
+                      filtered_fpkm_values.append(-1)
                   else:
-                      filtered_tpm_values.append(tpm_values[correspondent_index - 1])
+                      filtered_tpm_values.append(tpm_values_dict[gene_idx_ensembl_name])
+                      filtered_fpkm_values.append(fpkm_values_dict[gene_idx_ensembl_name])
                 tpm_matrix.append(np.array(filtered_tpm_values))
+                fpkm_matrix.append(np.array(filtered_fpkm_values))
                 print "cancer_name %s\tstage %s\ttpm %d / %d" % ( cancer_name, stage, fidx + 1, len(fpkm_case_id_list))
             tpm_matrix = np.array(tpm_matrix).transpose()
+            fpkm_matrix = np.array(fpkm_matrix).transpose()
+
             np.savetxt(out_stage_tpm_data_path, tpm_matrix, delimiter="\t")
+            np.savetxt(out_stage_fpkm_data_path, fpkm_matrix, delimiter="\t")
             print "save %s stage tpm data successful!" % stage
 if __name__ == '__main__':
     generate_tpm_table_for_each_cancer_and_each_stage()
