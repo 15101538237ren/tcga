@@ -16,9 +16,12 @@ data_dir_names = {'methy_intermidiate/';'rna_intermidiate/';'snv_intermidiate/'}
 cancer_names = {'BRCA';'COAD'; 'LIHC'};%; ; 'KIRC'; 'KIRP'; 'LUAD'; 'LUSC'; 'THCA'
 size_cancer_names = size(cancer_names);
 
-stage_names = {'normal';'i'}; %;'ii';'iii';'iv'
+stage_names = {'normal';'i';'ii';'iii';'iv'};
+x_tick_max = 5.5;
+x_tick_nums = [1 2,3 4 5];
+x_tick_names = {'n';'i';'ii';'iii';'iv'};
 size_stage = size(stage_names);
-stage_markers = {'b.';'r.'};%;'g.';'k.';'c.'
+stage_markers = {'b.';'r.';'g.';'k.';'c.'};
 
 fig_dir = '../../figures/methy_rna_mutation/';
 
@@ -51,9 +54,9 @@ for j = 1 : size_target_gene(1)
         end
         
         set(gca, 'YTick', [0 0.3 0.6 0.9]);
-        set(gca, 'XTick', [1 2]); %  3 4 5 6
-        set(gca,'XTicklabel',{'n';'i';}); % 'ii';'iii';'iv';'x'
-        axis([0 3.0 0.0 1.0]);
+        set(gca, 'XTick', x_tick_nums); %  
+        set(gca,'XTicklabel', x_tick_names); % 
+        axis([0 x_tick_max 0.0 1.0]);
         ylabel(cancer_name);
         box on;
         if i == 1
@@ -72,9 +75,9 @@ for j = 1 : size_target_gene(1)
              hold on;
         end
         set(gca, 'YTick', [-2, -1, 0, 1, 2]);
-        set(gca, 'XTick', [1 2]); %  3 4 5 6
-        set(gca,'XTicklabel',{'n';'i';}); % 'ii';'iii';'iv';'x'
-        axis([0 3.0 -2.5 2.5]);
+        set(gca, 'XTick', x_tick_nums); %  
+        set(gca,'XTicklabel', x_tick_names); % 
+        axis([0 x_tick_max -2.5 2.5]);
         box on;
         if i == 1
             title('log_{10}(mRNA)');
@@ -96,9 +99,9 @@ for j = 1 : size_target_gene(1)
              hold on;
         end
         set(gca, 'YTick', [-2, -1, 0, 1, 2]);
-        set(gca, 'XTick', [1 2]); %  3 4 5 6
-        set(gca,'XTicklabel',{'n';'i';}); % 'ii';'iii';'iv';'x'
-        axis([0 3.0 0.0 1.0]);
+        set(gca, 'XTick', x_tick_nums); %  
+        set(gca,'XTicklabel',x_tick_names); % 
+        axis([0 x_tick_max 0.0 1.0]);
         box on;
         if i == 1
             title('SNV Mutation Rate');
