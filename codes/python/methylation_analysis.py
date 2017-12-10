@@ -104,14 +104,17 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
 
     if not load:
         profile = {}
+        profile_cpg = {}
         profile_uuid = {}
         for tumor_stage in tumor_stages:
             profile_uuid[tumor_stage] = []
 
         for gene in GENOME:
             profile[gene] = []
+            profile_cpg[gene] = []
             for ts in tumor_stages:
                 profile[gene].append([])
+                profile_cpg[gene].append([])
 
         [uuid_to_stage, _, _] = connect_uuid_to_cancer_stage(cancer_name,uuids, methy_metadata_path)
         tot_timelapse = 0.0
@@ -155,6 +158,7 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
             now_file.close()
 
             for gene_symbol in GENOME:
+                profile_cpg[gene_symbol][tumor_stages_xaxis[uuid_to_stage[uuid]] - 1].append(temp_gene_methy_dict[gene_symbol])
                 mean_methy_level_of_this_case = float(np.array(temp_gene_methy_dict[gene_symbol]).mean())
                 profile[gene_symbol][tumor_stages_xaxis[uuid_to_stage[uuid]] - 1].append(mean_methy_level_of_this_case)
             profile_uuid[uuid_to_stage[uuid]].append(uuid)
@@ -170,14 +174,16 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
         pickle_file = open(pickle_filepath, 'wb')
         pickle.dump(profile,pickle_file, -1)
         pickle.dump(profile_uuid,pickle_file, -1)
+        pickle.dump(profile_cpg,pickle_file, -1)
         pickle_file.close()
     else:
         pickle_file = open(pickle_filepath,"rb")
         profile = pickle.load(pickle_file)
         profile_uuid = pickle.load(pickle_file)
+        profile_cpg = pickle.load(pickle_file)
         pickle_file.close()
         print "load pickle file %s finished" % (pickle_filepath)
-    return [profile, profile_uuid]
+    return [profile, profile_uuid, profile_cpg]
 
 #将缓存的数据中的二级癌症阶段按照一级阶段进行合并,输出格式与gene_and_cancer_stage_profile_of_dna_methy相同
 def convert_origin_profile_into_merged_profile(origin_profile_list):
@@ -438,5 +444,5 @@ if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    dump_data_into_dat_according_to_cancer_type_and_stage_pipepile()
+    just_calc_methylation_pickle_pipeline()
     pass

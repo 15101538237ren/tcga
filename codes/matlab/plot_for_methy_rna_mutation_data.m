@@ -13,7 +13,7 @@ is_merge_stage = 'merged_stage/';
 
 data_dir_names = {'methy_intermidiate/';'rna_intermidiate/';'snv_intermidiate/'};
 
-cancer_names = {'BRCA';'COAD'; 'LIHC'};%; ; 'KIRC'; 'KIRP'; 'LUAD'; 'LUSC'; 'THCA'
+cancer_names = {'COAD'};%;'BRCA'; ; 'LIHC'; 'KIRC'; 'KIRP'; 'LUAD'; 'LUSC'; 'THCA'
 size_cancer_names = size(cancer_names);
 
 stage_names = {'normal';'i';'ii';'iii';'iv'};
@@ -30,7 +30,7 @@ size_data_types = size(data_types);
 file_ends = {'_methy_dat.dat';'_tpm.dat';'_mutation_rate.txt'};
 
 fig_counter = 0;
-nrow = 5;
+nrow = 1;
 ncol = 3;
 for j = 1 : size_target_gene(1)
     fig_counter = fig_counter + 1;
@@ -84,31 +84,36 @@ for j = 1 : size_target_gene(1)
         end
         
         hold on;
+        
         subplot(nrow, ncol, ncol*(i-1) + 3);
         %3. plot mutation rate for each stage
+         max_mut_rate = 0.0;
         for k = 1 : size_stage(1)
              if k == 1
                  continue;
              end
              stage_name = char(stage_names(k));
              mutation_rate_for_stage = load([intermediate_dir, char(data_dir_names(3)), is_merge_stage, cancer_name , '/', cancer_name, '_', stage_name, char(file_ends(3))]);
-             mutation_rate_of_gene = mutation_rate_for_stage(target_gene_idxs(j , 1) + 1, :)';
+             mutation_rate_of_gene = mutation_rate_for_stage(target_gene_idxs(j , 1), :)';
              size_y_data = size(mutation_rate_of_gene);
              x_data = ones(size_y_data(1), 1) .* k + (0.4 * rand(size_y_data(1), 1) - 0.2);
-             plot(x_data(:, 1), mutation_rate_of_gene(:, 1), char(stage_markers(k)),'markersize',20);
+             mut_rate = mutation_rate_of_gene(2,1);
+             plot(x_data(:, 1),mut_rate , char(stage_markers(k)),'markersize',20);
              hold on;
+             max_mut_rate = max (max_mut_rate, mut_rate);
         end
-        set(gca, 'YTick', [-2, -1, 0, 1, 2]);
+        set(gca, 'YTick', [0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]);
         set(gca, 'XTick', x_tick_nums); %  
         set(gca,'XTicklabel',x_tick_names); % 
-        axis([0 x_tick_max 0.0 1.0]);
+        y_max = ceil(max_mut_rate * 10.0)/10.0;
+        axis([0 x_tick_max 0.0 y_max]);
         box on;
         if i == 1
             title('SNV Mutation Rate');
         end
     end
     set(gcf,'Name',gene_name);
-    exportfig(fig, fig_path , 'FontMode', 'fixed', 'color', 'cmyk','width',6 ,'height', 9 , 'FontSize', 12,'Resolution',300,'LineWidth',0.5); % , 
+    exportfig(fig, fig_path , 'FontMode', 'fixed', 'color', 'cmyk','width',6 ,'height', 2 , 'FontSize', 12,'Resolution',300,'LineWidth',0.5); % , 
     close all;
 end
 end
