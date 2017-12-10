@@ -188,38 +188,39 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
                         data_file.write("\n".join(data_str))
 
 def calc_mutation_rate():
-    cancer_stage = "i"
-    for cancer_name in cancer_names:
-        output_cancer_dir = os.path.join(snv_intermidiate_dir, "merged_stage", cancer_name)
-        mutation_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_data.dat")
-        out_mutation_rate_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate.txt")
-        out_mutation_rate_sorted_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate_sorted.txt")
-        ltws = []
-        mut_dict = {}
-        with open(mutation_data_filepath,"r") as data_file:
-            data_file.readline()
-            line = data_file.readline()
-            while line:
-                line_contents = line.split("\t")
-                gene_idx = int(str(line_contents[0]))
-                gene_name = GENOME[gene_idx - 1]
-                line_data = np.sign([int(item.strip("\n")) for item in line_contents[1: -1]])
-                sum_d = line_data.sum()
-                size_d = line_data.size
-                line_mutation_rate = float(sum_d) / float(size_d)
-                ltw = "\t".join([str(gene_idx), str(round(line_mutation_rate, 4))])
-                mut_dict[gene_idx] = line_mutation_rate
-                ltws.append(ltw)
+    temp_stages = merged_stage_n[0 : -1]
+    for cancer_stage in temp_stages:
+        for cancer_name in cancer_names:
+            output_cancer_dir = os.path.join(snv_intermidiate_dir, "merged_stage", cancer_name)
+            mutation_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_data.dat")
+            out_mutation_rate_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate.txt")
+            out_mutation_rate_sorted_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate_sorted.txt")
+            ltws = []
+            mut_dict = {}
+            with open(mutation_data_filepath,"r") as data_file:
+                data_file.readline()
                 line = data_file.readline()
-        with open(out_mutation_rate_filepath,"w") as mutation_rate_file:
-            mutation_rate_file.write("\n".join(ltws))
-        sorted_dict = sorted(mut_dict.items(), key=lambda d: d[1],reverse=True)
-        ltws = []
-        with open(out_mutation_rate_sorted_filepath,"w") as mutation_rate_sorted_file:
-            for (k, v) in sorted_dict:
-                ltws.append("\t".join([str(k), str(v)]))
-            mutation_rate_sorted_file.write("\n".join(ltws))
-        print "finish %s" % cancer_name
+                while line:
+                    line_contents = line.split("\t")
+                    gene_idx = int(str(line_contents[0]))
+                    gene_name = GENOME[gene_idx - 1]
+                    line_data = np.sign([int(item.strip("\n")) for item in line_contents[1: -1]])
+                    sum_d = line_data.sum()
+                    size_d = line_data.size
+                    line_mutation_rate = float(sum_d) / float(size_d)
+                    ltw = "\t".join([str(gene_idx), str(round(line_mutation_rate, 4))])
+                    mut_dict[gene_idx] = line_mutation_rate
+                    ltws.append(ltw)
+                    line = data_file.readline()
+            with open(out_mutation_rate_filepath,"w") as mutation_rate_file:
+                mutation_rate_file.write("\n".join(ltws))
+            sorted_dict = sorted(mut_dict.items(), key=lambda d: d[1],reverse=True)
+            ltws = []
+            with open(out_mutation_rate_sorted_filepath,"w") as mutation_rate_sorted_file:
+                for (k, v) in sorted_dict:
+                    ltws.append("\t".join([str(k), str(v)]))
+                mutation_rate_sorted_file.write("\n".join(ltws))
+            print "finish %s" % cancer_name
 
 is_merge_stage = False
 dname = "merged_stage" if is_merge_stage else "stage"
@@ -240,7 +241,7 @@ for cancer_name in cancer_names:
         break
 
 if __name__ == '__main__':
-    dna_mutation_data_transform_pipline(is_merge_stage)
-    # calc_mutation_rate()
+    # dna_mutation_data_transform_pipline(is_merge_stage)
+    calc_mutation_rate()
     #
     pass
