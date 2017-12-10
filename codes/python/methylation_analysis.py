@@ -14,7 +14,7 @@ for idx, item in enumerate(tumor_stages):
 tumor_stages_xaxis2 = {}
 for idx, item in enumerate(merged_stage):
     tumor_stages_xaxis2[item] = idx + 1
-is_merge_stage = True
+is_merge_stage = False
 stage_list = merged_stage if is_merge_stage else tumor_stages
 dname = "merged_stage" if is_merge_stage else "stage"
 # 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
@@ -293,7 +293,9 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
 #将某癌症数据写入到tsv文件中
 def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
     [profile, profile_uuid] = profile_list
+
     for stage_idx, stage_name in enumerate(stage_list):
+        stage_values_length = len(profile['APC'][stage_idx])
         output_cancer_dir = outdir
         if not os.path.exists(output_cancer_dir):
             os.makedirs(output_cancer_dir)
@@ -307,7 +309,7 @@ def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list
             out_str.append(header)
             for gidx, gene in enumerate(GENOME):
                 if gene in profile.keys():
-                    methy_vals = [-1 for it in range(len(profile[gene][stage_idx]))]
+                    methy_vals = [-1 for it in range(stage_values_length)]
                     for pidx, item in enumerate(profile[gene][stage_idx]):
                         item_val = round(item, 4)
                         item_str = str(item_val)
@@ -436,5 +438,5 @@ if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    dump_stage_std_and_mean_pipline()
+    dump_data_into_dat_according_to_cancer_type_and_stage_pipepile()
     pass
