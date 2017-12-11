@@ -424,28 +424,31 @@ def dump_data_into_dat_pipepile():
         dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
 
-def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, in_dir, out_dir, profile_list, is_merge_stage=True):
-    [profile, profile_uuid, profile_cpg] = profile_list
+def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir):
     for stage_idx, stage_name in enumerate(stage_list):
         input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
         methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
-        
+
 #根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
 def dump_entropy_into_dat_pipeline():
     for cancer_name in cancer_names:
         if cancer_name == "COAD":
             print "now start %s" % cancer_name
-            data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
-            pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
-            temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
-            new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-
-            profile_list = new_profile_list if is_merge_stage else temp_profile_list
             in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
             out_dir = os.path.join(methy_entropy_dir, dname, cancer_name)
+
+            input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
+            methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+            A = methy_dat.values
+            cnt = 0
+            for eidx, ele in enumerate(A):
+                if any(e < 0 for e in ele):
+                    cnt += 1
+                    print eidx + 1
+            print cnt
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
-            dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], in_dir, out_dir, profile_list, is_merge_stage=is_merge_stage)
+            dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir)
 
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
