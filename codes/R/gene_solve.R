@@ -2,7 +2,7 @@
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-setwd("/disk/tcga/")
+setwd("~/PycharmProjects/tcga") # /disk/tcga/
 base_dir <- getwd()
 gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
 gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
@@ -31,12 +31,12 @@ df_idx = 5 # df_col_index_start_of_data
 
 if(!file.exists(output_data_dir))
 {
-  dir.create(output_data_dir)
+  dir.create(output_data_dir,recursive = T)
   print(sprintf("create %s successful!", output_data_dir))
 }
 
 stage_name_list = c("normal", "i")
-cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% 
+cancer_name_list = c("COAD")# c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% 
 
 get_cancer_idx = function(cancer_name)
 {
@@ -241,7 +241,7 @@ for(item in dir(methy_data_dir))
     
     if(!file.exists(cancer_dir_path))
     {
-        dir.create(cancer_dir_path)
+        dir.create(cancer_dir_path,recursive = T)
     }
     
     #---------------------------------------------
