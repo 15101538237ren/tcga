@@ -29,11 +29,12 @@ metadata_dir = os.path.join(intermediate_file_dir, "metadata")
 methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate")
 snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
 rna_intermidiate_dir = os.path.join(intermediate_file_dir, "rna_intermidiate")
+methy_entropy_dir = os.path.join(intermediate_file_dir, "methy_entropy")
 
 methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
 methy_mean_std_dir = os.path.join(intermediate_file_dir, "methy_mean_std")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir]
 for dir_name in dirs:
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
