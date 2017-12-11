@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
-import os, math, re, json, time, pickle, random
-import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from base import *
 methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
@@ -14,7 +13,7 @@ for idx, item in enumerate(tumor_stages):
 tumor_stages_xaxis2 = {}
 for idx, item in enumerate(merged_stage):
     tumor_stages_xaxis2[item] = idx + 1
-is_merge_stage = False
+is_merge_stage = True
 stage_list = merged_stage if is_merge_stage else tumor_stages
 dname = "merged_stage" if is_merge_stage else "stage"
 # 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
@@ -187,21 +186,25 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
 
 #将缓存的数据中的二级癌症阶段按照一级阶段进行合并,输出格式与gene_and_cancer_stage_profile_of_dna_methy相同
 def convert_origin_profile_into_merged_profile(origin_profile_list):
-    [origin_profile, origin_profile_uuid] = origin_profile_list
+    [origin_profile, origin_profile_uuid, origin_profile_cpg] = origin_profile_list
     new_profile = {gene:[] for gene in GENOME}
     new_profile_uuid = {stage:[] for stage in merged_stage}
+    new_profile_cpg = {gene:[] for gene in GENOME}
     for idx, item1 in enumerate(tumor_stages):
         new_profile_uuid[tumor_stage_convert[item1]].extend(origin_profile_uuid[item1])
     for gene in GENOME:
         for stage in merged_stage:
             new_profile[gene].append([])
+            new_profile_cpg[gene].append([])
 
         for idx, item1 in enumerate(tumor_stages):
             # print "%s\t%s\t%d\t%d" % (gene, item1, len(origin_profile[gene][idx]), len(origin_profile_uuid[item1]))
             if len(origin_profile[gene][idx]) == len(origin_profile_uuid[item1]):
                 for idx2, item2 in enumerate(origin_profile[gene][idx]):
                     new_profile[gene][tumor_stages_xaxis2[tumor_stage_convert[item1]] - 1].append(item2)
-    return [new_profile, new_profile_uuid]
+                    new_profile_cpg[gene][tumor_stages_xaxis2[tumor_stage_convert[item1]] - 1].append(origin_profile_cpg[gene][idx][idx2])
+
+    return [new_profile, new_profile_uuid, new_profile_cpg]
 
 #将原来小类stage数据合并到大类stage
 def convert_origin_to_new_profile(origin_list_of_a_gene):
@@ -298,7 +301,7 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
 
 #将某癌症数据写入到tsv文件中
 def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list, outdir, profile_list, is_merge_stage=True):
-    [profile, profile_uuid] = profile_list
+    [profile, profile_uuid,_] = profile_list
 
     for stage_idx, stage_name in enumerate(stage_list):
         stage_values_length = len(profile['APC'][stage_idx])
@@ -404,8 +407,9 @@ def dump_stage_std_and_mean_pipline():
         if not os.path.exists(cancer_mean_std_dir):
             os.makedirs(cancer_mean_std_dir)
         calc_cancer_means_and_stds_for_genome(cancer_name, profile_list, stage_list, cancer_mean_std_dir)
+
 #生成dna甲基化的dat文件
-def dump_data_into_dat_according_to_cancer_type_and_stage_pipepile():
+def dump_data_into_dat_pipepile():
     for cancer_name in cancer_names:
         print "now start %s" % cancer_name
         data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
@@ -418,6 +422,33 @@ def dump_data_into_dat_according_to_cancer_type_and_stage_pipepile():
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
+
+
+def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir):
+    for stage_idx, stage_name in enumerate(stage_list):
+        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
+        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+
+#根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
+def dump_entropy_into_dat_pipeline():
+    for cancer_name in cancer_names:
+        if cancer_name == "COAD":
+            print "now start %s" % cancer_name
+            in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+            out_dir = os.path.join(methy_entropy_dir, dname, cancer_name)
+
+            input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
+            methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+            A = methy_dat.values
+            cnt = 0
+            for eidx, ele in enumerate(A):
+                if any(e < 0 for e in ele):
+                    cnt += 1
+                    print eidx + 1
+            print cnt
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+            dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir)
 
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
@@ -444,5 +475,5 @@ if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    just_calc_methylation_pickle_pipeline()
+    dump_entropy_into_dat_pipeline()
     pass

@@ -93,7 +93,7 @@ def get_submitter_id_stages(is_merge_stage):
                     for k,v in stages_of_subids_dict[0].items():
                         submitter_id_stage_dict[k] = v
                         stage_and_its_submitter_dict[v].append(k)
-            out_stage_list = merged_stage_n if is_merge_stage else tumor_stages_n
+            out_stage_list = mutation_merged_stage if is_merge_stage else mutation_stage
             for stage in out_stage_list:
                 if len(stage_and_its_submitter_dict[stage]):
                     output_stage_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage +"_submitter_ids.txt")
@@ -173,7 +173,7 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
                             line = snv_file.readline()
                         print "end %s" % file_path
 
-                for cancer_stage in merged_stage_n:
+                for cancer_stage in mutation_merged_stage:
                     stage_submitter_ids_path = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage +"_submitter_ids.txt")
                     stage_submitter_ids = read_tab_seperated_file_and_get_target_column(1, stage_submitter_ids_path)
                     mut_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_data.dat")
@@ -188,7 +188,7 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
                         data_file.write("\n".join(data_str))
 
 def calc_mutation_rate():
-    temp_stages = merged_stage_n[0 : -1]
+    temp_stages = mutation_merged_stage[0 : -1]
     for cancer_stage in temp_stages:
         for cancer_name in cancer_names:
             output_cancer_dir = os.path.join(snv_intermidiate_dir, "merged_stage", cancer_name)

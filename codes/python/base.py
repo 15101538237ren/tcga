@@ -29,21 +29,26 @@ metadata_dir = os.path.join(intermediate_file_dir, "metadata")
 methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate")
 snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
 rna_intermidiate_dir = os.path.join(intermediate_file_dir, "rna_intermidiate")
+methy_entropy_dir = os.path.join(intermediate_file_dir, "methy_entropy")
 
 methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
 methy_mean_std_dir = os.path.join(intermediate_file_dir, "methy_mean_std")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir]
 for dir_name in dirs:
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
 #global vars
 tumor_stages = ["normal","i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","x","not reported"]
-tumor_stages_n = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","x"]
 tumor_stage_convert = {"normal":"normal","i":"i","ia":"i","ib":"i","ii":"ii","iia":"ii","iib":"ii","iic":"ii","iii":"iii","iiia":"iii","iiib":"iii","iiic":"iii","iv":"iv","iva":"iv","ivb":"iv","ivc":"iv","x":"x","not reported":"not reported"}
 merged_stage = ["normal","i","ii","iii","iv","x","not reported"]
-merged_stage_n = ["i","ii","iii","iv","x"]
+
+methy_and_rna_merged_stage = ["normal","i","ii","iii","iv"]
+methy_and_rna_stage = ["normal","i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc"]
+
+mutation_merged_stage = ["i","ii","iii","iv"]
+mutation_stage = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc"]
 
 all_cancer_names = ["BRCA", "COAD", "LIHC", "LUAD", "LUSC","BLCA" ,"ESCA","HNSC" ,"KIRC", "KIRP", "PAAD", "READ", "THCA", "STAD","LGG","OV","GBM","LAML", "PRAD","UCEC","SARC", "UVM","CESC", "DLBC"]
 cancer_names = ["BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"]
