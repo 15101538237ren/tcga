@@ -36,7 +36,7 @@ if(!file.exists(output_data_dir))
 }
 
 stage_name_list = c("normal", "i")
-cancer_name_list = c("COAD")# c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% 
+cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% c("COAD")#
 
 get_cancer_idx = function(cancer_name)
 {
