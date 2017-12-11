@@ -30,6 +30,7 @@ df_idx = 5 # df_col_index_start_of_data
 if(!file.exists(output_data_dir))
 {
   dir.create(output_data_dir)
+  print(sprintf("create %s successful!", output_data_dir))
 }
 
 stage_name_list = c("normal", "i")
