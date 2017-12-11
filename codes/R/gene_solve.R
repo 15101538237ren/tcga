@@ -2,7 +2,7 @@
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-setwd("~/PycharmProjects/tcga/")
+setwd("/disk/tcga/")
 base_dir <- getwd()
 gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
 gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
@@ -25,6 +25,7 @@ score_file_positive_name_end = "_p_score.dat"
 score_file_negtive_name_end = "_n_score.dat"
 
 invalid_pvalue = 10 #set the invalid pvalue output into the dat file
+extreme_pvalue = -20 #set the extreme pvalue to represent p-value = 0, log(p-value)=-inf
 
 df_idx = 5 # df_col_index_start_of_data
 
@@ -110,9 +111,7 @@ maefun <- function(pred, obs)
 for(item in dir(methy_data_dir))
 {
   cancer_name = item
-  
   print(sprintf("start %s", cancer_name))
-  
   if(get_cancer_idx(cancer_name) == -1)
     next
   
@@ -161,12 +160,12 @@ for(item in dir(methy_data_dir))
       if(checkValue(origin_normal_methy, normal_sample_num) || checkValue(origin_i_th_methy, i_th_sample_num) 
          || checkValue(origin_normal_methy, normal_sample_num - 1))
       {
-        cancer_df_mp_score[i, df_idx : ncol(cancer_df_mp_score)] = rep(-1, ncol(cancer_df_mp_score) - df_idx + 1)
+        cancer_df_mp_score[i, df_idx : ncol(cancer_df_mp_score)] = rep(invalid_pvalue, ncol(cancer_df_mp_score) - df_idx + 1)
         cancer_df_mp_score[i, "LogNum"] = 1
         cancer_df_mp_score[i, "TotalNums"] = -1
         cancer_df_mp_score[i, "Score"] = -1
         
-        cancer_df_mn_score[i, df_idx:ncol(cancer_df_mp_score)] = rep(-1, ncol(cancer_df_mp_score) - df_idx + 1)
+        cancer_df_mn_score[i, df_idx:ncol(cancer_df_mp_score)] = rep(invalid_pvalue, ncol(cancer_df_mp_score) - df_idx + 1)
         cancer_df_mn_score[i, "LogNum"] = 1
         cancer_df_mn_score[i, "TotalNums"] = -1
         cancer_df_mn_score[i, "Score"] = -1
@@ -206,9 +205,12 @@ for(item in dir(methy_data_dir))
       
       p_val_list_up = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_up)
       p_val_list_down = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_down)
-      
+
       p_val_list_up = log10(p_val_list_up)
       p_val_list_down = log10(p_val_list_down)
+
+      p_val_list_up[p_val_list_up == -Inf] = extreme_pvalue
+      p_val_list_down[p_val_list_down == -Inf] = extreme_pvalue
       
       sub_num1 = sum(p_val_list_up < sig_level)
       sub_num2 = sum(p_val_list_down < sig_level)
