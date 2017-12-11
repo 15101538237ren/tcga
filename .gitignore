@@ -7,3 +7,5 @@ others
 *.pkl
 *.eps
 *.png
+.DS_Store
+.Rhistory
