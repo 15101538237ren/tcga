@@ -6,28 +6,15 @@
     *_pp_value.dat​和_pn_value.dat分别代表p+​value和p-value的数据
     *_p_score.dat​和_n_score.dat分别代表m+score和m-score的数据，该文件最后一列为score值。
 
-## Gene Index file
-1.global_files/gene_idx.txt
+3. 基因索引在:global_files/gene_idx.txt
+    第1列: 从1开始的基因索引编号
+    第2列: HUGO 基因名, 参考链接: https://www.genenames.org/
 
-The meaning of the columns in gene_idx.txt is as following:
-
-(1) : gene_index, start from 1
-
-(2) : HUGO genename, ref: https://www.genenames.org/
-
-## Gene Label file
-
-2.global_files/gene_label.dat
-
-The meaning of the columns in gene_label.dat is as following:
-
-(1) : gene_index, the same as gene_idx.txt
-
-(2) : whether this gene contains CGI before 2000bp of its TSS
-
-(3) : whether this gene is a DNA-binding RNA polymerase II transcription factor, ref: http://www.tfcheckpoint.org/
-
-(4) : the category of this gene, 0: other, 1: onco gene only, 2: tsg only, 3: both oncogene and tsg
+4. 基因标注文件:global_files/gene_label.dat
+    第1列: 基因索引,同gene_idx.txt的索引
+    第2列: 当前基因是否在上游2000bp-TSS范围内包含CpG岛, 1包含,0不包含
+    第3列: 当前基因是否是转录因子, 参考链接:http://www.tfcheckpoint.org/
+    第4列: 基因的抑癌,原癌类别: 1:仅为原癌基因, 2.仅为抑癌基因 3.既为原癌又为抑癌基因 0:其他基因
 
 ## Means and Stds of methylation data
 
