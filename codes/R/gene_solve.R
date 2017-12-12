@@ -3,13 +3,13 @@ library(parallel)
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-setwd("/disk/tcga/") # ~/PycharmProjects/tcga
-base_dir <- getwd()
 cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% c("COAD")#
 threads_number = length(cancer_name_list)
 
 generate_pvalue_table_pipeline = function(cancer_name)
 {
+  setwd("/disk/tcga/") # ~/PycharmProjects/tcga
+  base_dir <- getwd()
   gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
   gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
   
