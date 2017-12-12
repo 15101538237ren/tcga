@@ -5,112 +5,113 @@ library(fitdistrplus)
 library(dplyr)
 setwd("/disk/tcga/") # ~/PycharmProjects/tcga
 base_dir <- getwd()
-gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
-gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
-
-sig_level = -10
-
-gene_id_idx = 1
-gene_names_idx = 2
-gene_num = length(gene_names[[1]])
-gene_list_len = length(gene_names[[gene_names_idx]])
-data_frame_len = gene_list_len
-
-methy_data_dir = file.path(base_dir,"data","intermediate_file","methy_intermidiate","merged_stage")
-output_data_dir = file.path(base_dir,"data","intermediate_file","methy_pvalue","merged_stage")
-
-pvalue_positive_name_end = "_pp_value.dat"
-pvalue_negtive_name_end = "_pn_value.dat"
-
-score_file_positive_name_end = "_p_score.dat"
-score_file_negtive_name_end = "_n_score.dat"
-
-invalid_pvalue = 10 #set the invalid pvalue output into the dat file
-extreme_pvalue = -20 #set the extreme pvalue to represent p-value = 0, log(p-value)=-inf
-
-df_idx = 5 # df_col_index_start_of_data
-
-if(!file.exists(output_data_dir))
-{
-  dir.create(output_data_dir,recursive = T)
-  print(sprintf("create %s successful!", output_data_dir))
-}
-
-stage_name_list = c("normal", "i")
 cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% c("COAD")#
 threads_number = length(cancer_name_list)
-get_cancer_idx = function(cancer_name)
-{
-  for(i in 1:length(cancer_name_list))
-  {
-    if(cancer_name == cancer_name_list[i])
-    {
-      return (i)
-    }
-  }
-  return (-1)
-}
-
-#less: not less than, >
-#great: not greater than, <
-beta_hypothesis_test = function(x, shape1, shape2, alternative)
-{
-  beta_test_res = ks.test(x, "pbeta", shape1, shape2, alternative=alternative)
-  #print(beta_test_res)
-  
-  return (beta_test_res$p.value)
-}
-
-p_value_calc = function(x, shape1, shape2, alternative)
-{
-  if(alternative=='greater')
-  {
-    return (pbeta(x, shape1, shape2))
-  }
-  else if(alternative == 'less')
-  {
-    return (1.0 - pbeta(x, shape1, shape2))
-  }
-}
-
-
-get_info_list = function(file_name)
-{
-  str_list = strsplit(file_name, "[.]")
-  file_name_pre = str_list[[1]][1]
-  info_list = strsplit(file_name_pre, "_")
-  return (info_list[[1]])
-}
-
-get_stage_name = function(file_name)
-{
-  info_list = get_info_list(file_name)
-  stage_idx = get_info_idx("stage")
-  stage_name = info_list[stage_idx]
-  return (stage_name)
-}
-
-get_cancer_name = function(file_name)
-{
-  info_list = get_info_list(file_name)
-  cancer_idx = get_info_idx("cancer")
-  cancer_name = info_list[cancer_idx]
-  return (cancer_name)
-}
-
-checkValue = function(methy_vector, num)
-{
-  if(sum(methy_vector == -1) == num)
-    return (TRUE)
-  return (FALSE)
-}
-maefun <- function(pred, obs)
-{
-  return (mean(abs(pred - obs)))
-}
 
 generate_pvalue_table_pipeline = function(cancer_name)
 {
+  gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
+  gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
+  
+  sig_level = -10
+  
+  gene_id_idx = 1
+  gene_names_idx = 2
+  gene_num = length(gene_names[[1]])
+  gene_list_len = length(gene_names[[gene_names_idx]])
+  data_frame_len = gene_list_len
+  
+  methy_data_dir = file.path(base_dir,"data","intermediate_file","methy_intermidiate","merged_stage")
+  output_data_dir = file.path(base_dir,"data","intermediate_file","methy_pvalue","merged_stage")
+  
+  pvalue_positive_name_end = "_pp_value.dat"
+  pvalue_negtive_name_end = "_pn_value.dat"
+  
+  score_file_positive_name_end = "_p_score.dat"
+  score_file_negtive_name_end = "_n_score.dat"
+  
+  invalid_pvalue = 10 #set the invalid pvalue output into the dat file
+  extreme_pvalue = -20 #set the extreme pvalue to represent p-value = 0, log(p-value)=-inf
+  
+  df_idx = 5 # df_col_index_start_of_data
+  
+  if(!file.exists(output_data_dir))
+  {
+    dir.create(output_data_dir,recursive = T)
+    print(sprintf("create %s successful!", output_data_dir))
+  }
+  
+  stage_name_list = c("normal", "i")
+  get_cancer_idx = function(cancer_name)
+  {
+    for(i in 1:length(cancer_name_list))
+    {
+      if(cancer_name == cancer_name_list[i])
+      {
+        return (i)
+      }
+    }
+    return (-1)
+  }
+  
+  #less: not less than, >
+  #great: not greater than, <
+  beta_hypothesis_test = function(x, shape1, shape2, alternative)
+  {
+    beta_test_res = ks.test(x, "pbeta", shape1, shape2, alternative=alternative)
+    #print(beta_test_res)
+    
+    return (beta_test_res$p.value)
+  }
+  
+  p_value_calc = function(x, shape1, shape2, alternative)
+  {
+    if(alternative=='greater')
+    {
+      return (pbeta(x, shape1, shape2))
+    }
+    else if(alternative == 'less')
+    {
+      return (1.0 - pbeta(x, shape1, shape2))
+    }
+  }
+  
+  
+  get_info_list = function(file_name)
+  {
+    str_list = strsplit(file_name, "[.]")
+    file_name_pre = str_list[[1]][1]
+    info_list = strsplit(file_name_pre, "_")
+    return (info_list[[1]])
+  }
+  
+  get_stage_name = function(file_name)
+  {
+    info_list = get_info_list(file_name)
+    stage_idx = get_info_idx("stage")
+    stage_name = info_list[stage_idx]
+    return (stage_name)
+  }
+  
+  get_cancer_name = function(file_name)
+  {
+    info_list = get_info_list(file_name)
+    cancer_idx = get_info_idx("cancer")
+    cancer_name = info_list[cancer_idx]
+    return (cancer_name)
+  }
+  
+  checkValue = function(methy_vector, num)
+  {
+    if(sum(methy_vector == -1) == num)
+      return (TRUE)
+    return (FALSE)
+  }
+  maefun <- function(pred, obs)
+  {
+    return (mean(abs(pred - obs)))
+  }
+  
   print(sprintf("start %s", cancer_name))
   if(get_cancer_idx(cancer_name) == -1)
     next
