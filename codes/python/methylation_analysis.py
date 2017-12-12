@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import matplotlib.pyplot as plt
 import pandas as pd
+import math
 from base import *
 methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
@@ -14,7 +15,7 @@ tumor_stages_xaxis2 = {}
 for idx, item in enumerate(merged_stage):
     tumor_stages_xaxis2[item] = idx + 1
 is_merge_stage = True
-stage_list = merged_stage if is_merge_stage else tumor_stages
+stage_list = methy_and_rna_merged_stages if is_merge_stage else methy_and_rna_stages
 dname = "merged_stage" if is_merge_stage else "stage"
 # 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
 def connect_filename_to_uuid():
@@ -423,33 +424,6 @@ def dump_data_into_dat_pipepile():
             os.makedirs(out_dir)
         dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
-
-def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir):
-    for stage_idx, stage_name in enumerate(stage_list):
-        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
-        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
-
-#根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
-def dump_entropy_into_dat_pipeline():
-    for cancer_name in cancer_names:
-        if cancer_name == "COAD":
-            print "now start %s" % cancer_name
-            in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
-            out_dir = os.path.join(methy_entropy_dir, dname, cancer_name)
-
-            input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
-            methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
-            A = methy_dat.values
-            cnt = 0
-            for eidx, ele in enumerate(A):
-                if any(e < 0 for e in ele):
-                    cnt += 1
-                    print eidx + 1
-            print cnt
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir)
-
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
@@ -469,6 +443,48 @@ def just_calc_methylation_pickle_pipeline():
         data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
         pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
         gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=False, whole_genes= True)
+
+def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins):
+    out_entropy_dat_fp = os.path.join(out_dir, cancer_name + "_entropy.dat")
+    entropy_matrix = [[item for item in range(len(stage_list) + 1)]]
+    for gene_idx, gene in enumerate(GENOME):
+        default_entropy_values = [gene_idx + 1]
+        default_entropy_values.extend([-1 for item in stage_list])
+        entropy_matrix.append(default_entropy_values)
+
+    for stage_idx, stage_name in enumerate(stage_list):
+        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
+        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+        methy_matrix = methy_dat.values
+
+        stage_sample_counts = len(methy_matrix[0])
+        for gene_idx, methy_values_of_gene_i in enumerate(methy_matrix):
+            #若beta_value矩阵的gene_idx行中没有-1的元素,才计算该基因的信息熵
+            if not any(methy_value < 0 for methy_value in methy_values_of_gene_i):
+                hist, bin_edges = np.histogram(methy_values_of_gene_i, bins=bins)
+                freqencies = hist / float(stage_sample_counts)
+                positive_frequencies = [freq for freq in freqencies if freq > 10e-6]
+                entropy_of_this_gene = 0.0
+                for fidx, freq in enumerate(positive_frequencies):
+                    entropy_of_this_gene += -1.0 * freq * math.log(freq)
+                # print entropy_of_this_gene
+                entropy_matrix[gene_idx + 1][stage_idx + 1] = entropy_of_this_gene
+    np.savetxt(out_entropy_dat_fp, np.array(entropy_matrix), delimiter="\t")
+    print "save %s successful!" % out_entropy_dat_fp
+
+#根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
+def dump_entropy_into_dat_pipeline():
+    bins = np.linspace(0.0, 1.0, num=51)
+    stages_fp = os.path.join(methy_entropy_dir, dname, "stage_idx.txt")
+    write_tab_seperated_file_for_a_list(stages_fp,stage_list, index_included=True)
+    for cancer_name in cancer_names:
+        print "now start %s" % cancer_name
+        in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        out_dir = os.path.join(methy_entropy_dir, dname)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins)
+
 
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):

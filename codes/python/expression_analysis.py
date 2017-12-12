@@ -187,7 +187,7 @@ if not os.path.exists(emsembl_ids_filepath):
 
 def generate_tpm_table_for_each_cancer_and_each_stage():
     gene_idxs = np.array([item for item in range(len(GENOME) + 1)])
-    stage_list = merged_stage if is_merge_stage else tumor_stages
+    stage_list = methy_and_rna_merged_stages if is_merge_stage else methy_and_rna_stages
     gene_idx_ensembl_names = read_tab_seperated_file_and_get_target_column(1,emsembl_ids_filepath)
     for cancer_name in cancer_names:
         cancer_data_dir = os.path.join(rna_data_dir, cancer_name)
