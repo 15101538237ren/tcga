@@ -1,4 +1,5 @@
 #install.packages(c("hash","fitdistrplus","dplyr"))
+library(parallel)
 library(hash)
 library(fitdistrplus)
 library(dplyr)
@@ -37,7 +38,7 @@ if(!file.exists(output_data_dir))
 
 stage_name_list = c("normal", "i")
 cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% c("COAD")#
-
+threads_number = cancer_name_list
 get_cancer_idx = function(cancer_name)
 {
   for(i in 1:length(cancer_name_list))
@@ -108,15 +109,14 @@ maefun <- function(pred, obs)
   return (mean(abs(pred - obs)))
 }
 
-for(item in dir(methy_data_dir))
+generate_pvalue_table_pipeline(cancer_name)
 {
-  cancer_name = item
   print(sprintf("start %s", cancer_name))
   if(get_cancer_idx(cancer_name) == -1)
     next
   
-  normal_file_name = sprintf("%s/%s/%s_normal_methy_dat.dat", methy_data_dir, item, item)
-  i_th_file_name = sprintf("%s/%s/%s_i_methy_dat.dat", methy_data_dir, item, item)
+  normal_file_name = sprintf("%s/%s/%s_normal_methy_dat.dat", methy_data_dir, cancer_name, cancer_name)
+  i_th_file_name = sprintf("%s/%s/%s_i_methy_dat.dat", methy_data_dir, cancer_name, cancer_name)
   
   if(file.exists(normal_file_name) && file.exists(i_th_file_name))
   {
@@ -124,7 +124,7 @@ for(item in dir(methy_data_dir))
     i_th_data_frame = read.table(i_th_file_name, header=TRUE)
     
     cancer_df_mp_score = data.frame(GeneIds=gene_names[[gene_id_idx]], LogNum=rep(0,data_frame_len), 
-                                  TotalNums=rep(0,data_frame_len), Score=rep(0,data_frame_len))
+                                    TotalNums=rep(0,data_frame_len), Score=rep(0,data_frame_len))
     for(i in 2:length(names(i_th_data_frame)))
     {
       sample_id = names(i_th_data_frame)[i]
@@ -185,10 +185,10 @@ for(item in dir(methy_data_dir))
       i_th_methy = origin_i_th_methy[i_th_idx_subset]
       
       result = tryCatch ({
-                            fit_res = fitdist(normal_methy, "beta")
-                          },error=function(e){
-                            cat("fitdist error: i=", i, "\n")
-                          })
+        fit_res = fitdist(normal_methy, "beta")
+      },error=function(e){
+        cat("fitdist error: i=", i, "\n")
+      })
       fit_estimate_res = fit_res$estimate
       fit_shape1 = fit_estimate_res["shape1"] #p
       fit_shape2 = fit_estimate_res["shape2"] #q
@@ -205,10 +205,10 @@ for(item in dir(methy_data_dir))
       
       p_val_list_up = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_up)
       p_val_list_down = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_down)
-
+      
       p_val_list_up = log10(p_val_list_up)
       p_val_list_down = log10(p_val_list_down)
-
+      
       p_val_list_up[p_val_list_up == -Inf] = extreme_pvalue
       p_val_list_down[p_val_list_down == -Inf] = extreme_pvalue
       
@@ -241,7 +241,7 @@ for(item in dir(methy_data_dir))
     
     if(!file.exists(cancer_dir_path))
     {
-        dir.create(cancer_dir_path,recursive = T)
+      dir.create(cancer_dir_path,recursive = T)
     }
     
     #---------------------------------------------
@@ -265,3 +265,7 @@ for(item in dir(methy_data_dir))
     write.table(cancer_df_pn_scores, file=score_file_negtive_file_name, sep = "\t", row.names=F, col.names=F, quote=F)
   }
 }
+
+cl <- makeCluster(threads_number)
+results <- parLapply(cl, cancer_name_list, generate_pvalue_table_pipeline)
+stopCluster(cl)
