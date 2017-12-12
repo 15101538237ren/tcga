@@ -8,6 +8,7 @@ threads_number = length(cancer_name_list)
 
 generate_pvalue_table_pipeline = function(cancer_name)
 {
+  cancer_names = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA")
   setwd("/disk/tcga/") # ~/PycharmProjects/tcga
   base_dir <- getwd()
   gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
@@ -44,9 +45,9 @@ generate_pvalue_table_pipeline = function(cancer_name)
   stage_name_list = c("normal", "i")
   get_cancer_idx = function(cancer_name)
   {
-    for(i in 1:length(cancer_name_list))
+    for(i in 1:length(cancer_names))
     {
-      if(cancer_name == cancer_name_list[i])
+      if(cancer_name == cancer_names[i])
       {
         return (i)
       }
