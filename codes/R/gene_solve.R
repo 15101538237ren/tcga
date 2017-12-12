@@ -188,55 +188,57 @@ generate_pvalue_table_pipeline = function(cancer_name)
       
       result = tryCatch ({
         fit_res = fitdist(normal_methy, "beta")
+        
+        fit_estimate_res = fit_res$estimate
+        fit_shape1 = fit_estimate_res["shape1"] #p
+        fit_shape2 = fit_estimate_res["shape2"] #q
+        #plot(fit_res)
+        #print(fit_res)
+        
+        i_th_array = array(i_th_methy, c(length(i_th_methy), 1))
+        #print(i_th_array)
+        alternative_up = "less"
+        alternative_down = "greater"
+        
+        # the ks.test result p-value list is equal to pbeta value list
+        # when ks.test return p-value = NaN, the pbeta result = 1.00000
+        
+        p_val_list_up = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_up)
+        p_val_list_down = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_down)
+        
+        p_val_list_up = log10(p_val_list_up)
+        p_val_list_down = log10(p_val_list_down)
+        
+        p_val_list_up[p_val_list_up == -Inf] = extreme_pvalue
+        p_val_list_down[p_val_list_down == -Inf] = extreme_pvalue
+        
+        sub_num1 = sum(p_val_list_up < sig_level)
+        sub_num2 = sum(p_val_list_down < sig_level)
+        
+        final_p_val_list_up = rep(invalid_pvalue, i_th_sample_num)
+        final_p_val_list_up[i_th_idx_subset] = p_val_list_up
+        
+        final_p_val_list_down = rep(invalid_pvalue, i_th_sample_num)
+        final_p_val_list_down[i_th_idx_subset] = p_val_list_down
+        
+        cancer_df_mp_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_up
+        cancer_df_mp_score[i, "LogNum"] = sub_num1
+        cancer_df_mp_score[i, "TotalNums"] = effective_i_th_num
+        cancer_df_mp_score[i, "Score"] = sub_num1 / effective_i_th_num
+        
+        cancer_df_mn_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_down
+        cancer_df_mn_score[i, "LogNum"] = sub_num2
+        cancer_df_mn_score[i, "TotalNums"] = effective_i_th_num
+        cancer_df_mn_score[i, "Score"] = sub_num2 / effective_i_th_num
+        
+        if(i %% 100 == 0)
+        {
+          cat(i,"/", data_frame_len,":", i/data_frame_len," is finished!\n")
+        }
+        
       },error=function(e){
         cat("fitdist error: i=", i, "\n")
       })
-      fit_estimate_res = fit_res$estimate
-      fit_shape1 = fit_estimate_res["shape1"] #p
-      fit_shape2 = fit_estimate_res["shape2"] #q
-      #plot(fit_res)
-      #print(fit_res)
-      
-      i_th_array = array(i_th_methy, c(length(i_th_methy), 1))
-      #print(i_th_array)
-      alternative_up = "less"
-      alternative_down = "greater"
-      
-      # the ks.test result p-value list is equal to pbeta value list
-      # when ks.test return p-value = NaN, the pbeta result = 1.00000
-      
-      p_val_list_up = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_up)
-      p_val_list_down = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_down)
-      
-      p_val_list_up = log10(p_val_list_up)
-      p_val_list_down = log10(p_val_list_down)
-      
-      p_val_list_up[p_val_list_up == -Inf] = extreme_pvalue
-      p_val_list_down[p_val_list_down == -Inf] = extreme_pvalue
-      
-      sub_num1 = sum(p_val_list_up < sig_level)
-      sub_num2 = sum(p_val_list_down < sig_level)
-      
-      final_p_val_list_up = rep(invalid_pvalue, i_th_sample_num)
-      final_p_val_list_up[i_th_idx_subset] = p_val_list_up
-      
-      final_p_val_list_down = rep(invalid_pvalue, i_th_sample_num)
-      final_p_val_list_down[i_th_idx_subset] = p_val_list_down
-      
-      cancer_df_mp_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_up
-      cancer_df_mp_score[i, "LogNum"] = sub_num1
-      cancer_df_mp_score[i, "TotalNums"] = effective_i_th_num
-      cancer_df_mp_score[i, "Score"] = sub_num1 / effective_i_th_num
-      
-      cancer_df_mn_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_down
-      cancer_df_mn_score[i, "LogNum"] = sub_num2
-      cancer_df_mn_score[i, "TotalNums"] = effective_i_th_num
-      cancer_df_mn_score[i, "Score"] = sub_num2 / effective_i_th_num
-      
-      if(i %% 100 == 0)
-      {
-        cat(i,"/", data_frame_len,":", i/data_frame_len," is finished!\n")
-      }
     }
     
     cancer_dir_path = sprintf("%s/%s", output_data_dir, cancer_name)
