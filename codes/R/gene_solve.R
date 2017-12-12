@@ -109,7 +109,7 @@ maefun <- function(pred, obs)
   return (mean(abs(pred - obs)))
 }
 
-generate_pvalue_table_pipeline(cancer_name)
+generate_pvalue_table_pipeline = function(cancer_name)
 {
   print(sprintf("start %s", cancer_name))
   if(get_cancer_idx(cancer_name) == -1)
