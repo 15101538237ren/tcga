@@ -1,124 +1,122 @@
 #install.packages(c("hash","fitdistrplus","dplyr"))
-library(parallel)
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% c("COAD")#
-threads_number = length(cancer_name_list)
+setwd("/disk/tcga/") # ~/PycharmProjects/tcga
+base_dir <- getwd()
+gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
+gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
 
-generate_pvalue_table_pipeline = function(cancer_name)
+sig_level = -10
+
+gene_id_idx = 1
+gene_names_idx = 2
+gene_num = length(gene_names[[1]])
+gene_list_len = length(gene_names[[gene_names_idx]])
+data_frame_len = gene_list_len
+
+methy_data_dir = file.path(base_dir,"data","intermediate_file","methy_intermidiate","merged_stage")
+output_data_dir = file.path(base_dir,"data","intermediate_file","methy_pvalue","merged_stage")
+
+pvalue_positive_name_end = "_pp_value.dat"
+pvalue_negtive_name_end = "_pn_value.dat"
+
+score_file_positive_name_end = "_p_score.dat"
+score_file_negtive_name_end = "_n_score.dat"
+
+invalid_pvalue = 10 #set the invalid pvalue output into the dat file
+extreme_pvalue = -20 #set the extreme pvalue to represent p-value = 0, log(p-value)=-inf
+
+df_idx = 5 # df_col_index_start_of_data
+
+if(!file.exists(output_data_dir))
 {
-  cancer_names = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA")
-  setwd("/disk/tcga/") # ~/PycharmProjects/tcga
-  base_dir <- getwd()
-  gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
-  gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
-  
-  sig_level = -10
-  
-  gene_id_idx = 1
-  gene_names_idx = 2
-  gene_num = length(gene_names[[1]])
-  gene_list_len = length(gene_names[[gene_names_idx]])
-  data_frame_len = gene_list_len
-  
-  methy_data_dir = file.path(base_dir,"data","intermediate_file","methy_intermidiate","merged_stage")
-  output_data_dir = file.path(base_dir,"data","intermediate_file","methy_pvalue","merged_stage")
-  
-  pvalue_positive_name_end = "_pp_value.dat"
-  pvalue_negtive_name_end = "_pn_value.dat"
-  
-  score_file_positive_name_end = "_p_score.dat"
-  score_file_negtive_name_end = "_n_score.dat"
-  
-  invalid_pvalue = 10 #set the invalid pvalue output into the dat file
-  extreme_pvalue = -20 #set the extreme pvalue to represent p-value = 0, log(p-value)=-inf
-  
-  df_idx = 5 # df_col_index_start_of_data
-  
-  if(!file.exists(output_data_dir))
+  dir.create(output_data_dir,recursive = T)
+  print(sprintf("create %s successful!", output_data_dir))
+}
+
+stage_name_list = c("normal", "i")
+cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% 
+
+get_cancer_idx = function(cancer_name)
+{
+  for(i in 1:length(cancer_name_list))
   {
-    dir.create(output_data_dir,recursive = T)
-    print(sprintf("create %s successful!", output_data_dir))
-  }
-  
-  stage_name_list = c("normal", "i")
-  get_cancer_idx = function(cancer_name)
-  {
-    for(i in 1:length(cancer_names))
+    if(cancer_name == cancer_name_list[i])
     {
-      if(cancer_name == cancer_names[i])
-      {
-        return (i)
-      }
-    }
-    return (-1)
-  }
-  
-  #less: not less than, >
-  #great: not greater than, <
-  beta_hypothesis_test = function(x, shape1, shape2, alternative)
-  {
-    beta_test_res = ks.test(x, "pbeta", shape1, shape2, alternative=alternative)
-    #print(beta_test_res)
-    
-    return (beta_test_res$p.value)
-  }
-  
-  p_value_calc = function(x, shape1, shape2, alternative)
-  {
-    if(alternative=='greater')
-    {
-      return (pbeta(x, shape1, shape2))
-    }
-    else if(alternative == 'less')
-    {
-      return (1.0 - pbeta(x, shape1, shape2))
+      return (i)
     }
   }
+  return (-1)
+}
+
+#less: not less than, >
+#great: not greater than, <
+beta_hypothesis_test = function(x, shape1, shape2, alternative)
+{
+  beta_test_res = ks.test(x, "pbeta", shape1, shape2, alternative=alternative)
+  #print(beta_test_res)
   
-  
-  get_info_list = function(file_name)
+  return (beta_test_res$p.value)
+}
+
+p_value_calc = function(x, shape1, shape2, alternative)
+{
+  if(alternative=='greater')
   {
-    str_list = strsplit(file_name, "[.]")
-    file_name_pre = str_list[[1]][1]
-    info_list = strsplit(file_name_pre, "_")
-    return (info_list[[1]])
+    return (pbeta(x, shape1, shape2))
   }
-  
-  get_stage_name = function(file_name)
+  else if(alternative == 'less')
   {
-    info_list = get_info_list(file_name)
-    stage_idx = get_info_idx("stage")
-    stage_name = info_list[stage_idx]
-    return (stage_name)
+    return (1.0 - pbeta(x, shape1, shape2))
   }
-  
-  get_cancer_name = function(file_name)
-  {
-    info_list = get_info_list(file_name)
-    cancer_idx = get_info_idx("cancer")
-    cancer_name = info_list[cancer_idx]
-    return (cancer_name)
-  }
-  
-  checkValue = function(methy_vector, num)
-  {
-    if(sum(methy_vector == -1) == num)
-      return (TRUE)
-    return (FALSE)
-  }
-  maefun <- function(pred, obs)
-  {
-    return (mean(abs(pred - obs)))
-  }
-  
+}
+
+
+get_info_list = function(file_name)
+{
+  str_list = strsplit(file_name, "[.]")
+  file_name_pre = str_list[[1]][1]
+  info_list = strsplit(file_name_pre, "_")
+  return (info_list[[1]])
+}
+
+get_stage_name = function(file_name)
+{
+  info_list = get_info_list(file_name)
+  stage_idx = get_info_idx("stage")
+  stage_name = info_list[stage_idx]
+  return (stage_name)
+}
+
+get_cancer_name = function(file_name)
+{
+  info_list = get_info_list(file_name)
+  cancer_idx = get_info_idx("cancer")
+  cancer_name = info_list[cancer_idx]
+  return (cancer_name)
+}
+
+checkValue = function(methy_vector, num)
+{
+  if(sum(methy_vector == -1) == num)
+    return (TRUE)
+  return (FALSE)
+}
+maefun <- function(pred, obs)
+{
+  return (mean(abs(pred - obs)))
+}
+
+for(item in dir(methy_data_dir))
+{
+  cancer_name = item
   print(sprintf("start %s", cancer_name))
   if(get_cancer_idx(cancer_name) == -1)
     next
   
-  normal_file_name = sprintf("%s/%s/%s_normal_methy_dat.dat", methy_data_dir, cancer_name, cancer_name)
-  i_th_file_name = sprintf("%s/%s/%s_i_methy_dat.dat", methy_data_dir, cancer_name, cancer_name)
+  normal_file_name = sprintf("%s/%s/%s_normal_methy_dat.dat", methy_data_dir, item, item)
+  i_th_file_name = sprintf("%s/%s/%s_i_methy_dat.dat", methy_data_dir, item, item)
   
   if(file.exists(normal_file_name) && file.exists(i_th_file_name))
   {
@@ -126,7 +124,7 @@ generate_pvalue_table_pipeline = function(cancer_name)
     i_th_data_frame = read.table(i_th_file_name, header=TRUE)
     
     cancer_df_mp_score = data.frame(GeneIds=gene_names[[gene_id_idx]], LogNum=rep(0,data_frame_len), 
-                                    TotalNums=rep(0,data_frame_len), Score=rep(0,data_frame_len))
+                                  TotalNums=rep(0,data_frame_len), Score=rep(0,data_frame_len))
     for(i in 2:length(names(i_th_data_frame)))
     {
       sample_id = names(i_th_data_frame)[i]
@@ -187,65 +185,63 @@ generate_pvalue_table_pipeline = function(cancer_name)
       i_th_methy = origin_i_th_methy[i_th_idx_subset]
       
       result = tryCatch ({
-        fit_res = fitdist(normal_methy, "beta")
-        
-        fit_estimate_res = fit_res$estimate
-        fit_shape1 = fit_estimate_res["shape1"] #p
-        fit_shape2 = fit_estimate_res["shape2"] #q
-        #plot(fit_res)
-        #print(fit_res)
-        
-        i_th_array = array(i_th_methy, c(length(i_th_methy), 1))
-        #print(i_th_array)
-        alternative_up = "less"
-        alternative_down = "greater"
-        
-        # the ks.test result p-value list is equal to pbeta value list
-        # when ks.test return p-value = NaN, the pbeta result = 1.00000
-        
-        p_val_list_up = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_up)
-        p_val_list_down = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_down)
-        
-        p_val_list_up = log10(p_val_list_up)
-        p_val_list_down = log10(p_val_list_down)
-        
-        p_val_list_up[p_val_list_up == -Inf] = extreme_pvalue
-        p_val_list_down[p_val_list_down == -Inf] = extreme_pvalue
-        
-        sub_num1 = sum(p_val_list_up < sig_level)
-        sub_num2 = sum(p_val_list_down < sig_level)
-        
-        final_p_val_list_up = rep(invalid_pvalue, i_th_sample_num)
-        final_p_val_list_up[i_th_idx_subset] = p_val_list_up
-        
-        final_p_val_list_down = rep(invalid_pvalue, i_th_sample_num)
-        final_p_val_list_down[i_th_idx_subset] = p_val_list_down
-        
-        cancer_df_mp_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_up
-        cancer_df_mp_score[i, "LogNum"] = sub_num1
-        cancer_df_mp_score[i, "TotalNums"] = effective_i_th_num
-        cancer_df_mp_score[i, "Score"] = sub_num1 / effective_i_th_num
-        
-        cancer_df_mn_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_down
-        cancer_df_mn_score[i, "LogNum"] = sub_num2
-        cancer_df_mn_score[i, "TotalNums"] = effective_i_th_num
-        cancer_df_mn_score[i, "Score"] = sub_num2 / effective_i_th_num
-        
-        if(i %% 100 == 0)
-        {
-          cat(i,"/", data_frame_len,":", i/data_frame_len," is finished!\n")
-        }
-        
-      },error=function(e){
-        cat("fitdist error: i=", i, "\n")
-      })
+                            fit_res = fitdist(normal_methy, "beta")
+                          },error=function(e){
+                            cat("fitdist error: i=", i, "\n")
+                          })
+      fit_estimate_res = fit_res$estimate
+      fit_shape1 = fit_estimate_res["shape1"] #p
+      fit_shape2 = fit_estimate_res["shape2"] #q
+      #plot(fit_res)
+      #print(fit_res)
+      
+      i_th_array = array(i_th_methy, c(length(i_th_methy), 1))
+      #print(i_th_array)
+      alternative_up = "less"
+      alternative_down = "greater"
+      
+      # the ks.test result p-value list is equal to pbeta value list
+      # when ks.test return p-value = NaN, the pbeta result = 1.00000
+      
+      p_val_list_up = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_up)
+      p_val_list_down = apply(i_th_array, 1, p_value_calc, shape1=fit_shape1, shape2=fit_shape2, alternative=alternative_down)
+
+      p_val_list_up = log10(p_val_list_up)
+      p_val_list_down = log10(p_val_list_down)
+
+      p_val_list_up[p_val_list_up == -Inf] = extreme_pvalue
+      p_val_list_down[p_val_list_down == -Inf] = extreme_pvalue
+      
+      sub_num1 = sum(p_val_list_up < sig_level)
+      sub_num2 = sum(p_val_list_down < sig_level)
+      
+      final_p_val_list_up = rep(invalid_pvalue, i_th_sample_num)
+      final_p_val_list_up[i_th_idx_subset] = p_val_list_up
+      
+      final_p_val_list_down = rep(invalid_pvalue, i_th_sample_num)
+      final_p_val_list_down[i_th_idx_subset] = p_val_list_down
+      
+      cancer_df_mp_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_up
+      cancer_df_mp_score[i, "LogNum"] = sub_num1
+      cancer_df_mp_score[i, "TotalNums"] = effective_i_th_num
+      cancer_df_mp_score[i, "Score"] = sub_num1 / effective_i_th_num
+      
+      cancer_df_mn_score[i, df_idx:ncol(cancer_df_mp_score)] = final_p_val_list_down
+      cancer_df_mn_score[i, "LogNum"] = sub_num2
+      cancer_df_mn_score[i, "TotalNums"] = effective_i_th_num
+      cancer_df_mn_score[i, "Score"] = sub_num2 / effective_i_th_num
+      
+      if(i %% 100 == 0)
+      {
+        cat(i,"/", data_frame_len,":", i/data_frame_len," is finished!\n")
+      }
     }
     
     cancer_dir_path = sprintf("%s/%s", output_data_dir, cancer_name)
     
     if(!file.exists(cancer_dir_path))
     {
-      dir.create(cancer_dir_path,recursive = T)
+        dir.create(cancer_dir_path,recursive = T)
     }
     
     #---------------------------------------------
@@ -269,7 +265,3 @@ generate_pvalue_table_pipeline = function(cancer_name)
     write.table(cancer_df_pn_scores, file=score_file_negtive_file_name, sep = "\t", row.names=F, col.names=F, quote=F)
   }
 }
-
-cl <- makeCluster(threads_number)
-results <- parLapply(cl, cancer_name_list, generate_pvalue_table_pipeline)
-stopCluster(cl)
