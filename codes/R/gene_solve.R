@@ -3,7 +3,7 @@ library(parallel)
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-setwd("/disk/tcga/") # ~/PycharmProjects/tcga
+setwd("~/PycharmProjects/tcga") # /disk/tcga/
 base_dir <- getwd()
 gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
 gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
@@ -38,7 +38,7 @@ if(!file.exists(output_data_dir))
 
 stage_name_list = c("normal", "i")
 cancer_name_list = c("BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA") #% c("COAD")#
-threads_number = cancer_name_list
+threads_number = length(cancer_name_list)
 get_cancer_idx = function(cancer_name)
 {
   for(i in 1:length(cancer_name_list))
