@@ -1,3 +1,11 @@
+1. 熵的数据在/disk/tcga/data/intermediate_file/methy_entropy/merged_stage​
+    非法熵用-1表示，癌症阶段列表index在文件夹下的stage_idx.txt
+
+2. log10(p-value)的数据在：/disk/tcga/data/intermediate_file/methy_pvalue/merged_stage/​​​
+    非法的log10(p-value)设置为了10（相当于pvalue = 10^10）
+    *_pp_value.dat​和_pn_value.dat分别代表p+​value和p-value的数据
+    *_p_score.dat​和_n_score.dat分别代表m+score和m-score的数据，该文件最后一列为score值。
+
 ## Gene Index file
 1.global_files/gene_idx.txt
 

@@ -475,16 +475,15 @@ def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir
 #根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
 def dump_entropy_into_dat_pipeline():
     bins = np.linspace(0.0, 1.0, num=51)
+    out_dir = os.path.join(methy_entropy_dir, dname)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     stages_fp = os.path.join(methy_entropy_dir, dname, "stage_idx.txt")
     write_tab_seperated_file_for_a_list(stages_fp,stage_list, index_included=True)
     for cancer_name in cancer_names:
         print "now start %s" % cancer_name
         in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
-        out_dir = os.path.join(methy_entropy_dir, dname)
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
         dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins)
-
 
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
