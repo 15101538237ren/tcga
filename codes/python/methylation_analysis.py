@@ -495,7 +495,7 @@ def calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir , sta
     out_corr_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_wanted + "_" + middle_name + "_corr.dat")
     methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
     methy_matrix = methy_dat.values
-    corr_matrix = np.ones((len_gidx + 1, len_gidx + 1)) * (-1)
+    corr_matrix = np.ones((len_gidx + 1, len_gidx + 1)) * (-10)
     corr_matrix[0][0] = 0
     for mi in range(len_gidx):
         corr_matrix[mi + 1][0] = mi + 1
@@ -520,7 +520,7 @@ def calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir , sta
     print "save %s successful!" % out_corr_dat_fp
 def calc_methy_correlation_pipeline():
     cancer_name = "COAD"
-    middle_name_list = ["pn"]
+    middle_name_list = ["pp","pn"]
     for middle_name in middle_name_list:
         out_dir = os.path.join(methy_corr_dir, dname, cancer_name)
         if not os.path.exists(out_dir):
