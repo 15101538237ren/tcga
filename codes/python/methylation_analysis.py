@@ -487,40 +487,49 @@ def dump_entropy_into_dat_pipeline():
         print "now start %s" % cancer_name
         in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
         dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins)
-def calc_methy_correlation(cancer_name, in_dir, out_dir):
-    for stage_idx, stage_name in enumerate(stage_list):
-        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
-        out_corr_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_name + "_corr.dat")
-        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
-        methy_matrix = methy_dat.values
-        (m_rows, m_cols) = methy_matrix.shape
-        corr_matrix = np.ones((m_rows, m_rows)) * (-1)
-        for mi in range(m_rows):
-            for mj in range(m_rows):
-                i_arr = methy_matrix[mi]
+def calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir , stage_wanted, middle_name):
+    input_dat_fp = os.path.join(methy_in_dir, cancer_name + "_" + stage_wanted + "_methy_dat.dat")
+    gidx_fp_path = os.path.join(gidx_in_dir, cancer_name + "_" + stage_wanted + "_" + middle_name + "_gidx.txt")
+    gidxs =[int(gidx) for gidx in read_tab_seperated_file_and_get_target_column(1, gidx_fp_path)]
+    len_gidx = len(gidxs)
+    out_corr_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_wanted + "_" + middle_name + "_corr.dat")
+    methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+    methy_matrix = methy_dat.values
+    corr_matrix = np.ones((len_gidx + 1, len_gidx + 1)) * (-1)
+    corr_matrix[0][0] = 0
+    for mi in range(len_gidx):
+        corr_matrix[mi + 1][0] = mi + 1
+        corr_matrix[0][mi + 1] = mi + 1
+
+        for mj in range(len_gidx):
+            if mi == mj:
+                corr_matrix[mi + 1][mj + 1] = 1.0
+            elif mj < mi:
+                i_arr = methy_matrix[gidxs[mi] - 1]
                 if any(methy_value < 0 for methy_value in i_arr):
                     continue
 
-                j_arr = methy_matrix[mj]
+                j_arr = methy_matrix[gidxs[mj] - 1]
                 if (mi != mj) and any(methy_value < 0 for methy_value in j_arr):
                     continue
-
-                if mi == mj:
-                    corr_matrix[mi][mj] = 1.0
-                else:
-                    corr_val = np.corrcoef(i_arr, j_arr)[0, 1]
-                    corr_matrix[mi][mj] = corr_val
-            print mi
-        np.savetxt(out_corr_dat_fp, corr_matrix, delimiter="\t")
-        print "save %s successful!" % out_corr_dat_fp
+                corr_val = np.corrcoef(i_arr, j_arr)[0, 1]
+                corr_matrix[mi + 1][mj + 1] = corr_val
+                corr_matrix[mj + 1][mi + 1] = corr_val
+        print mi
+    np.savetxt(out_corr_dat_fp, corr_matrix, delimiter="\t")
+    print "save %s successful!" % out_corr_dat_fp
 def calc_methy_correlation_pipeline():
-    out_dir = os.path.join(methy_corr_dir, dname)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-    for cancer_name in cancer_names:
+    cancer_name = "COAD"
+    middle_name_list = ["pn"]
+    for middle_name in middle_name_list:
+        out_dir = os.path.join(methy_corr_dir, dname, cancer_name)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        stage_wanted = "i"
         print "now start %s" % cancer_name
-        in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
-        calc_methy_correlation(cancer_name, in_dir, out_dir)
+        methy_in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        gidx_in_dir = out_dir
+        calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir, stage_wanted, middle_name)
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)

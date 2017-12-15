@@ -6,9 +6,7 @@ global An Ai Aii Aiii Aiv PP PN Sp Sn E cancer_name
 cancer_name = 'COAD';
 stage_of_pscore_observed = 'i';
 out_significant_pscore_gidx_dir = ['../../data/intermediate_file/methy_corr/merged_stage/',cancer_name,'/'];
-if ~exist(out_significant_pscore_gidx_dir)
-    mkdir(out_significant_pscore_gidx_dir)
-end
+if (!)
 methy_dat_path = ['../../data/intermediate_file/methy_intermidiate/merged_stage/',cancer_name,'/'];
 An=load(strcat(methy_dat_path,cancer_name,'_normal_methy_dat.dat'));
 Ai=load(strcat(methy_dat_path,cancer_name,'_i_methy_dat.dat'));
@@ -100,7 +98,7 @@ sp0_gene_idxs = Sp0(J0,1);
 n0=size(J0,1);
 idxs1 = 1 : n0;
 out_mat1 = [idxs1', sp0_gene_idxs(:, 1)]';
-out_sp0_gidx_fp = [out_significant_pscore_gidx_dir, cancer_name,'_',stage_of_pscore_observed, '_pp_gidx.txt'];
+out_sp0_gidx_fp = [cancer_name, '_sp0_gidx.txt'];
 fid1 = fopen(out_sp0_gidx_fp,'w');
 fprintf(fid1,'%d\t%d\n', out_mat1);
 fclose(fid1);
@@ -113,7 +111,7 @@ n0=size(J0,1);
 sn0_gene_idxs = Sn0(J0,1);
 idxs2 = 1 : n0;
 out_mat2 = [idxs2', sn0_gene_idxs(:, 1)]';
-out_sn0_gidx_fp = [out_significant_pscore_gidx_dir, cancer_name,'_',stage_of_pscore_observed, '_pn_gidx.txt'];
+out_sn0_gidx_fp = [cancer_name, '_sn0_gidx.txt'];
 fid2 = fopen(out_sn0_gidx_fp,'w');
 fprintf(fid2,'%d\t%d\n', out_mat2);
 fclose(fid2);
