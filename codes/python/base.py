@@ -30,11 +30,13 @@ methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate
 snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
 rna_intermidiate_dir = os.path.join(intermediate_file_dir, "rna_intermidiate")
 methy_entropy_dir = os.path.join(intermediate_file_dir, "methy_entropy")
+methy_corr_dir = os.path.join(intermediate_file_dir, "methy_corr")
 
 methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
 methy_mean_std_dir = os.path.join(intermediate_file_dir, "methy_mean_std")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir,methy_corr_dir]
+
 for dir_name in dirs:
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
@@ -114,18 +116,18 @@ def label_cgi_genes(CGI_genenames_filepath):
 def read_alias_file_and_output_keys_list(input_fp):
     rtn_keys = []
     with open(input_fp,'r') as input_file:
-        line = input_file.readline()
+        line = input_file.readline().strip("\n")
         while line:
             contents = line.split("\t")
             gene_name = contents[0]
             rtn_keys.append(gene_name)
             if len(contents) > 1:
-                content1 = contents[1].strip("\n")
+                content1 = contents[1]
                 alias = content1.split("|")
                 if len(alias) and alias[0] != "":
                     for alias_name in alias:
                         rtn_keys.append(alias_name)
-            line = input_file.readline()
+            line = input_file.readline().strip("\n")
     return rtn_keys
 
 #input_onco_fp: filepath of onco_gene_file input_tsg_fp: filepath of tumor_suppressed_gene_file, gene_category(0: other, 1: onco, 2: tsg)
@@ -158,6 +160,11 @@ origin_tsg_fp = os.path.join(global_files_dir, "TSG_1018.tsv")
 
 gene_categorys = label_TSG_or_OncoGene(origin_onco_fp, origin_tsg_fp)
 
+origin_onco_fp_vogelstein = os.path.join(global_files_dir, "Oncogene_Vogelstein.txt")
+origin_tsg_fp_vogelstein = os.path.join(global_files_dir, "TSG_Vogelstein.txt")
+
+gene_categorys_vogelstein = label_TSG_or_OncoGene(origin_onco_fp_vogelstein, origin_tsg_fp_vogelstein)
+
 CGI_genenames_fp = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
 gene_cgi_labels = label_cgi_genes(CGI_genenames_fp)
 
@@ -176,7 +183,7 @@ def generate_gene_index(gene_idx_fp, gene_label_fp):
     with open(gene_label_fp,"w") as gene_label_file:
         ltws = []
         for gidx, gene in enumerate(GENOME):
-            ltw = "\t".join([str(gidx + 1), str(gene_cgi_labels[gidx]), str(tf_gene_labels[gidx]), str(gene_categorys[gidx])])
+            ltw = "\t".join([str(gidx + 1), str(gene_cgi_labels[gidx]), str(tf_gene_labels[gidx]), str(gene_categorys[gidx]), str(gene_categorys_vogelstein[gidx])])
             ltws.append(ltw)
         gene_label_file.write("\n".join(ltws))
     print "generate_gene_index successful at %s" % gene_idx_fp

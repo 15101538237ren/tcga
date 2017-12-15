@@ -16,7 +16,7 @@ gene_categories = [[0, 0];[1, 3];[2, 3];[0, 0]]; %Genome doesn't have category, 
 n_gene_categories = 4;
 figure_filename_start = {'Genome';'Onco';'TSG';'Other'};
 
-cancername={'THCA';'LUSC';'LUAD';'LIHC';'KIRP';'KIRC';'COAD';'BRCA'};
+cancername={'BRCA'; 'COAD'; 'KIRC'; 'KIRP'; 'LIHC'; 'LUAD'; 'LUSC'; 'THCA'};
 
 for gc = 1 : n_gene_categories
     fig=figure(gc);
@@ -34,7 +34,8 @@ for gc = 1 : n_gene_categories
     for i=1:8
         A=load(strcat(entropy_base_dir, char(cancername(i)),'_entropy.dat'));
         X=zeros(4,2);
-        subplot(4,4,2*(i-1)+1);
+        fl_i = floor(i/5);
+        subplot(4,4,4 * fl_i + i);
         hold on;
         for k=1:4
             J=find(A(:,k+1)>0);
@@ -50,16 +51,24 @@ for gc = 1 : n_gene_categories
         end
         box on;
         xlabel('entropy');
-        ylabel('cases (%)');
-        title(cancername(i));
-
-        subplot(4,4,2*(i-1)+2);
-        plot(X(:,1),X(:,2),'k--o','markerfacecolor','k','markersize',5);
-        ylabel('entropy');
-        xlim([0 5]);
+        ylim([0 4]);
+        set(gca,'ytick',[1,2,3,4]);
+        if (mod(i, 4) == 1)
+            ylabel('cases (%)');
+        end
         set(gca,'xtick',[1,2,3,4]);
-        set(gca,'xticklabel',{'normal','i','ii','iii'});
         title(cancername(i));
+        
+        subplot(4,4, 4 * fl_i + i + 4);
+        plot(X(:,1),X(:,2),'k--o','markerfacecolor','k','markersize',5);
+        xlim([0 5]);
+        ylim([1 2.5]);
+        set(gca,'xtick',[1,2,3,4]);
+        set(gca,'ytick',[1,1.5,2,2.5]);
+        set(gca,'xticklabel',{'normal','i','ii','iii'});
+        if (mod(i, 4) == 1)
+            ylabel('entropy');
+        end
     end
     exportfig(fig,strcat(figure_path, char(figure_filename_start(gc)),'_entropy.eps'),'color','cmyk');
 end

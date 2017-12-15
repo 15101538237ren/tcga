@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import matplotlib.pyplot as plt
 import pandas as pd
-import math
+import numpy as np
 from base import *
 methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
@@ -261,11 +261,13 @@ def save_data_to_file(arr, path, precision = 4):
     file_out.close()
 
 #保存cancer_name癌症,out_stage_list中阶段的DNA甲基化数据
-def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_data = False,out_xy=False, out_all_stage=False):
-    if not os.path.exists(methy_intermidiate_dir):
-        os.makedirs(methy_intermidiate_dir)
+def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_data = False,out_xy=False, out_all_stage=False, target_gene_name=None):
     profile = profile_list[0]
-    for gene in GENOME:
+    target_gene_list =[target_gene_name] if target_gene_name else GENOME
+    out_methy_cancer_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+    if not os.path.exists(out_methy_cancer_dir):
+        os.makedirs(out_methy_cancer_dir)
+    for gene in target_gene_list:
         if gene in profile.keys():
             gene_data = profile[gene]
             merged_data = []
@@ -286,10 +288,10 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
                     stage_data = gene_data[idx]
                     merged_data.extend(stage_data)
                     if out_stage_data:
-                        save_data_to_file(stage_data, methy_intermidiate_dir + os.sep + gene + "_" + merged_stage[idx] + "_" + cancer_name + ".dat")
+                        save_data_to_file(stage_data, out_methy_cancer_dir + os.sep + gene + "_" + merged_stage[idx] + "_" + cancer_name + ".dat")
             if out_xy:
-                out_xy_path = methy_intermidiate_dir + os.sep + gene + "_xy_" + cancer_name + ".dat"
-                out_y_label_path = methy_intermidiate_dir + os.sep + gene + "_y_label_" + cancer_name + ".dat"
+                out_xy_path = out_methy_cancer_dir + os.sep + gene + "_xy_" + cancer_name + ".dat"
+                out_y_label_path = out_methy_cancer_dir + os.sep + gene + "_y_label_" + cancer_name + ".dat"
                 out_xy_file = open(out_xy_path, "w")
                 out_y_label_file = open(out_y_label_path, "w")
                 out_xy_file.write("\n".join(ltws_xy))
@@ -297,7 +299,7 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
                 out_xy_file.close()
                 out_y_label_file.close()
             if out_all_stage:
-                save_data_to_file(merged_data,  methy_intermidiate_dir + os.sep + gene + "_" + "all_stage" + "_" + cancer_name + ".dat")
+                save_data_to_file(merged_data,  out_methy_cancer_dir + os.sep + gene + "_" + "all_stage" + "_" + cancer_name + ".dat")
     print "save methy data successfully!"
 
 #将某癌症数据写入到tsv文件中
@@ -427,6 +429,7 @@ def dump_data_into_dat_pipepile():
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
+    target_gene_name = "EYA4"
     for cancer_name in cancer_names:
         if cancer_name == "COAD":
             print "now start %s" % cancer_name
@@ -434,7 +437,7 @@ def save_gene_methy_data_pipeline():
             pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
             temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
             new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-            save_gene_methy_data(cancer_name, new_profile_list, out_stage_list,out_stage_data=False, out_xy=False, out_all_stage=True)
+            save_gene_methy_data(cancer_name, new_profile_list, out_stage_list, out_stage_data=False, out_xy=False, out_all_stage=True, target_gene_name=target_gene_name)
 
 #只进行DNA甲基化数据缓存
 def just_calc_methylation_pickle_pipeline():
@@ -484,11 +487,45 @@ def dump_entropy_into_dat_pipeline():
         print "now start %s" % cancer_name
         in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
         dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins)
+def calc_methy_correlation(cancer_name, in_dir, out_dir):
+    for stage_idx, stage_name in enumerate(stage_list):
+        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
+        out_corr_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_name + "_corr.dat")
+        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+        methy_matrix = methy_dat.values
+        (m_rows, m_cols) = methy_matrix.shape
+        corr_matrix = np.ones((m_rows, m_rows)) * (-1)
+        for mi in range(m_rows):
+            for mj in range(m_rows):
+                i_arr = methy_matrix[mi]
+                if any(methy_value < 0 for methy_value in i_arr):
+                    continue
 
+                j_arr = methy_matrix[mj]
+                if (mi != mj) and any(methy_value < 0 for methy_value in j_arr):
+                    continue
+
+                if mi == mj:
+                    corr_matrix[mi][mj] = 1.0
+                else:
+                    corr_val = np.corrcoef(i_arr, j_arr)[0, 1]
+                    corr_matrix[mi][mj] = corr_val
+            print mi
+        np.savetxt(out_corr_dat_fp, corr_matrix, delimiter="\t")
+        print "save %s successful!" % out_corr_dat_fp
+def calc_methy_correlation_pipeline():
+    out_dir = os.path.join(methy_corr_dir, dname)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    for cancer_name in cancer_names:
+        print "now start %s" % cancer_name
+        in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        calc_methy_correlation(cancer_name, in_dir, out_dir)
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    dump_entropy_into_dat_pipeline()
+    # dump_entropy_into_dat_pipeline()
+    calc_methy_correlation_pipeline()
     pass
