@@ -7,7 +7,9 @@ global stage
 stage = 'i';
 cancer_names = {'BRCA';'COAD'; 'LIHC'; 'KIRC'; 'KIRP'; 'LUAD'; 'LUSC'; 'THCA'};
 fpre = '../../data/intermediate_file/';
-gene_class_path = strcat(fpre, 'gene_classification/');
+mp_score_threshold = 0.8;
+mutation_rate_threshold = 0.1;
+gene_class_path = strcat(fpre, 'gene_classification_mp_',num2str(mp_score_threshold),'_mut_',num2str(mutation_rate_threshold),'/');
 class_by_gene_category_path = strcat(fpre, 'class_by_gene_category/');
 class_by_cancer_path = strcat(fpre, 'class_by_cancer/');
 
@@ -18,7 +20,6 @@ for i = 1: length(paths)
         mkdir(char(paths(i)));
     end
 end
-
 
 gene_label = load(strcat('../../global_files/gene_label.dat'));
 gene_category_names = {'oncogene_698';'tsg_1018';'oncogene_vogelstein';'tsg_vogelstein';'genome'};
@@ -36,10 +37,12 @@ TSG_class_dat = zeros(len_cancers, 4);
 OGV_class_dat = zeros(len_cancers, 4);
 TSGV_class_dat = zeros(len_cancers, 4);
 
+class_names = {' none significant'; ' methylation significant';' mutatation significant';' both significant'};
+
 % 1.For each cancer, load M+ score, entropy, mutation rate
 for i = 1 : len_cancers
     cancer_name = char(cancer_names(i));
-    out_path = strcat(fpre, 'gene_classification/',cancer_name,'/');
+    out_path = strcat(gene_class_path ,cancer_name,'/');
     cancer_paths = {out_path};
     for k = 1: length(cancer_paths)
         if ~exist(char(cancer_paths(k)))
@@ -51,13 +54,13 @@ for i = 1 : len_cancers
     mp_score = load(strcat(fpre, 'methy_pvalue/merged_stage/',cancer_name,'/',cancer_name, '_p_score.dat'));
     mutation_rate  = load(strcat(fpre,'snv_intermidiate/merged_stage/',cancer_name,'/',cancer_name,'_',stage, '_mutation_rate.txt'));
     % class 0
-    none_significants = find(~(entropy_diff(:, 1) > 1 & mp_score(:, 4) > 0.3) & mutation_rate(:, 2) < 0.2);
+    none_significants = find(~(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold) & mutation_rate(:, 2) < mutation_rate_threshold);
     % class 1
-    methy_significants = find(entropy_diff(:, 1) > 1 & mp_score(:, 4) > 0.3 & mutation_rate(:, 2) < 0.2);
+    methy_significants = find(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold & mutation_rate(:, 2) < mutation_rate_threshold);
     % class 2
-    mutation_significants = find(~(entropy_diff(:, 1) > 1 & mp_score(:, 4) > 0.3) & mutation_rate(:, 2) > 0.2);
+    mutation_significants = find(~(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold) & mutation_rate(:, 2) > mutation_rate_threshold);
     % class 3
-    both_significants = find(entropy_diff(:, 1) > 1 & mp_score(:, 4) > 0.3 & mutation_rate(:, 2) > 0.2);
+    both_significants = find(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold & mutation_rate(:, 2) > mutation_rate_threshold);
     length_vector_genome = zeros(1,4);
     for j = 0:3
         fid = fopen(strcat(out_path,cancer_name, '_', 'genome_class_', num2str(j) ,'.dat'),'w');
@@ -107,11 +110,7 @@ for i = 1 : len_cancers
             end
             fprintf(fid,'%d\n', dat);
             fclose(fid);
-            if isempty(dat)
-                len_dat = 0;
-            else
-                len_dat = length(dat);
-            end
+            len_dat = length(dat);
             length_vector(1,j+1) = len_dat;
             switch k
                 case 1
@@ -131,90 +130,56 @@ for i = 1 : len_cancers
     end
 end
 
-nrow = 2;
-ncol = 4;
-for k = 1 : 5
-    switch k
-        case 1
-            dat = OG_class_dat;
-        case 2
-            dat = TSG_class_dat;
-        case 3
-            dat = OGV_class_dat;
-        case 4
-            dat = TSGV_class_dat;
-        case 5
-            dat = genome_class_dat;
-    end
-    
-    fig = figure(k);
-    hold on;
-    % loop cancer
-    for i = 1 : 8
-        subplot(nrow, ncol, i);
-        dat_val = dat(i,:);
-        pie(dat_val);
-        colormap([
-                1,0,0 %第一个是红的
-                0,1,0 %第二个是绿的
-                0,0,1 %第三个是蓝的
-                0.98,0.5,0.04 %第四个是橙的
-                ]);
-        title(char(cancer_names(i)));
-    end
-    fig_path = strcat(figure_path, char(gene_category_names(k)),'_pie.eps');
-    disp(fig_path);
-    exportfig(fig,fig_path,'color','cmyk','fontmode','fixed','fontsize',10);
-end
+%class by Gene Type
+% for k = 1 : 5
+%     switch k
+%         case 1
+%             dat = OG_class_dat;
+%         case 2
+%             dat = TSG_class_dat;
+%         case 3
+%             dat = OGV_class_dat;
+%         case 4
+%             dat = TSGV_class_dat;
+%         case 5
+%             dat = genome_class_dat;
+%     end
+%     cancer_dat = zeros(len_cancers + 1, 5);
+%     cancer_dat(1, 2 : 5) = 1 : 4;
+%     cancer_dat(2:end, 1) = 1 : len_cancers;
+%     cancer_dat(2:end, 2:end) = dat;
+%     cancer_dat = cancer_dat';
+%     out_dat_fp = strcat(class_by_gene_category_path, char(gene_category_names(k)),'.dat');
+%     fid = fopen(out_dat_fp,'w');
+%     fprintf(fid,'%d\t%d\t%d\t%d\t%d\n', cancer_dat);
+%     fclose(fid);
+% end
 
-for k = 1 : 5
-    switch k
-        case 1
-            dat = OG_class_dat;
-        case 2
-            dat = TSG_class_dat;
-        case 3
-            dat = OGV_class_dat;
-        case 4
-            dat = TSGV_class_dat;
-        case 5
-            dat = genome_class_dat;
-    end
-    cancer_dat = zeros(len_cancers + 1, 5);
-    cancer_dat(1, 2 : 5) = 1 : 4;
-    cancer_dat(2:end, 1) = 1 : len_cancers;
-    cancer_dat(2:end, 2:end) = dat;
-    cancer_dat = cancer_dat';
-    out_dat_fp = strcat(class_by_gene_category_path, char(gene_category_names(k)),'.dat');
-    fid = fopen(out_dat_fp,'w');
-    fprintf(fid,'%d\t%d\t%d\t%d\t%d\n', cancer_dat);
-    fclose(fid);
-end
-
-for j = 1 : 8
-    category_dat = zeros(6, 5);
-    category_dat(1, 2 : 5) = 1 : 4;
-    category_dat(2:end, 1) = 1 : 5;
-    for k = 1 : 5
-        switch k
-            case 1
-                dat = OG_class_dat;
-            case 2
-                dat = TSG_class_dat;
-            case 3
-                dat = OGV_class_dat;
-            case 4
-                dat = TSGV_class_dat;
-            case 5
-                dat = genome_class_dat;
-        end
-        category_dat(k + 1, 2 : end) = dat(j,:);
-    end
-    category_dat = category_dat';
-    out_dat_fp = strcat(class_by_cancer_path, char(cancer_names(j)),'.dat');
-    fid = fopen(out_dat_fp,'w');
-    fprintf(fid,'%d\t%d\t%d\t%d\t%d\n', category_dat);
-    fclose(fid);
-end
+%class by cancer type
+% for j = 1 : 8
+%     category_dat = zeros(6, 5);
+%     category_dat(1, 2 : 5) = 1 : 4;
+%     category_dat(2:end, 1) = 1 : 5;
+%     for k = 1 : 5
+%         switch k
+%             case 1
+%                 dat = OG_class_dat;
+%             case 2
+%                 dat = TSG_class_dat;
+%             case 3
+%                 dat = OGV_class_dat;
+%             case 4
+%                 dat = TSGV_class_dat;
+%             case 5
+%                 dat = genome_class_dat;
+%         end
+%         category_dat(k + 1, 2 : end) = dat(j,:);
+%     end
+%     category_dat = category_dat';
+%     out_dat_fp = strcat(class_by_cancer_path, char(cancer_names(j)),'.dat');
+%     fid = fopen(out_dat_fp,'w');
+%     fprintf(fid,'%d\t%d\t%d\t%d\t%d\n', category_dat);
+%     fclose(fid);
+% end
 close all;
 end
