@@ -359,7 +359,7 @@ def print_samplesize_of_each_cancer(sample_count_filepath):
         arr.append(str(tot))
         ltws.append("\t".join(arr))
 
-    with open(sample_count_filepath,"w") as sample_count_file:
+    with open(sample_count_filepath, "w") as sample_count_file:
         sample_count_file.write("\n".join(ltws))
 
 def calc_cancer_means_and_stds_for_genome(cancer_name, cancer_profile_arr, stage_list, cancer_mean_std_dir):

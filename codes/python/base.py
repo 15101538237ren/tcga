@@ -10,7 +10,7 @@ global_files_dir = os.path.join(base_dir, "global_files")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir = "/disk/tcga_raw_data"
+raw_data_dir = "/Users/Ren/PycharmProjects/tcga_raw_data"
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
@@ -49,8 +49,8 @@ merged_stage = ["normal","i","ii","iii","iv","x","not reported"]
 methy_and_rna_merged_stages = ["normal","i","ii","iii","iv"]
 methy_and_rna_stages = ["normal","i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc"]
 
-mutation_merged_stage = ["i","ii","iii","iv"]
-mutation_stage = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc"]
+mutation_merged_stage = ["i","ii","iii","iv","not reported"]
+mutation_stage = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","not reported"]
 
 all_cancer_names = ["BRCA", "COAD", "LIHC", "LUAD", "LUSC","BLCA" ,"ESCA","HNSC" ,"KIRC", "KIRP", "PAAD", "READ", "THCA", "STAD","LGG","OV","GBM","LAML", "PRAD","UCEC","SARC", "UVM","CESC", "DLBC"]
 cancer_names = ["BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"]
