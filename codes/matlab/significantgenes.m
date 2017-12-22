@@ -1,10 +1,12 @@
-function significantgenes()
+global mp_score_threshold mutation_rate_threshold
+mp_score_threshold = 0.8;
+mutation_rate_threshold = 0.1;
 genes={'BRCA';'COAD';'LIHC';'KIRC';'KIRP';'LUAD';'LUSC';'THCA'};
 fpre = '../../data/intermediate_file/';
-mp_score_threshold = 0.8;
-mutation_rate_threshold = 0.2;
 base_path = strcat(fpre, 'gene_classification_mp_',num2str(mp_score_threshold),'_mut_',num2str(mutation_rate_threshold),'/');
-%base_path = '../../data/intermediate_file/gene_classification/';
+if ~exist(base_path)
+        mkdir(base_path);
+end
 J=[];
 for i=1:8
     for j=1:3

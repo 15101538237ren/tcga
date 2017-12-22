@@ -2,13 +2,13 @@ function gene_classification()
 clc;
 clear all;
 close all;
-global stage
+global stage mp_score_threshold mutation_rate_threshold
+mp_score_threshold = 0.8;
+mutation_rate_threshold = 0.1;
 
 stage = 'i';
 cancer_names = {'BRCA';'COAD'; 'LIHC'; 'KIRC'; 'KIRP'; 'LUAD'; 'LUSC'; 'THCA'};
 fpre = '../../data/intermediate_file/';
-mp_score_threshold = 0.8;
-mutation_rate_threshold = 0.2;
 gene_class_path = strcat(fpre, 'gene_classification_mp_',num2str(mp_score_threshold),'_mut_',num2str(mutation_rate_threshold),'/');
 class_by_gene_category_path = strcat(fpre, 'class_by_gene_category/');
 class_by_cancer_path = strcat(fpre, 'class_by_cancer/');
@@ -129,57 +129,5 @@ for i = 1 : len_cancers
         fclose(fid);
     end
 end
-
-%class by Gene Type
-% for k = 1 : 5
-%     switch k
-%         case 1
-%             dat = OG_class_dat;
-%         case 2
-%             dat = TSG_class_dat;
-%         case 3
-%             dat = OGV_class_dat;
-%         case 4
-%             dat = TSGV_class_dat;
-%         case 5
-%             dat = genome_class_dat;
-%     end
-%     cancer_dat = zeros(len_cancers + 1, 5);
-%     cancer_dat(1, 2 : 5) = 1 : 4;
-%     cancer_dat(2:end, 1) = 1 : len_cancers;
-%     cancer_dat(2:end, 2:end) = dat;
-%     cancer_dat = cancer_dat';
-%     out_dat_fp = strcat(class_by_gene_category_path, char(gene_category_names(k)),'.dat');
-%     fid = fopen(out_dat_fp,'w');
-%     fprintf(fid,'%d\t%d\t%d\t%d\t%d\n', cancer_dat);
-%     fclose(fid);
-% end
-
-%class by cancer type
-% for j = 1 : 8
-%     category_dat = zeros(6, 5);
-%     category_dat(1, 2 : 5) = 1 : 4;
-%     category_dat(2:end, 1) = 1 : 5;
-%     for k = 1 : 5
-%         switch k
-%             case 1
-%                 dat = OG_class_dat;
-%             case 2
-%                 dat = TSG_class_dat;
-%             case 3
-%                 dat = OGV_class_dat;
-%             case 4
-%                 dat = TSGV_class_dat;
-%             case 5
-%                 dat = genome_class_dat;
-%         end
-%         category_dat(k + 1, 2 : end) = dat(j,:);
-%     end
-%     category_dat = category_dat';
-%     out_dat_fp = strcat(class_by_cancer_path, char(cancer_names(j)),'.dat');
-%     fid = fopen(out_dat_fp,'w');
-%     fprintf(fid,'%d\t%d\t%d\t%d\t%d\n', category_dat);
-%     fclose(fid);
-% end
 close all;
 end
