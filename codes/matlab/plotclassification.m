@@ -1,11 +1,15 @@
 function plotclassification()
-global L1
+global L1 base_path
+mp_score_threshold = 0.8;
+mutation_rate_threshold = 0.2;
+
 genes={'BRCA';'COAD';'LIHC';'KIRC';'KIRP';'LUAD';'LUSC';'THCA'};
 fpre = '../../data/intermediate_file/';
-mp_score_threshold = 0.8;
-mutation_rate_threshold = 0.1;
 base_path = strcat(fpre, 'gene_classification_mp_',num2str(mp_score_threshold),'_mut_',num2str(mutation_rate_threshold),'/');
 %base_path = '../../data/intermediate_file/gene_classification/';
+gene_idx_filepath = '../../global_files/gene_idx.txt';
+[gidxs, gene_names] = textread(gene_idx_filepath,'%d\t%s');
+
 J0=load(strcat(base_path,'genes_sig.ind'));
 L=load('../../global_files/gene_label.dat');
 fig=figure(1);
@@ -30,29 +34,30 @@ H3=find(ismember(J0,Zb)==1);
 H4=find(ismember(J0,Z0)==1);
 
 hy=0.7;
-c=['y','b','g','r'];
+c=['y','b','g','c'];
 col=['k','r','g','w'];
 
 H=[H1;H2;H3];
 n=size(H,1);
 L1=L(J0(H),:);
-
+%dlmwrite(strcat(base_path,'significant_genes.ind'),H);
+match_gene_name(J0(H),'significant_genes.ind');
 
 axes('position',[0.2 0.92 hy 0.02]);
 hold on;
 box off;
 axis off;
 
-fill([0 0 0.05 0.05],[0 1 1 0],'b','linestyle','none');
+fill([0 0 0.05 0.05],[0 1 1 0],c(2),'linestyle','none');
 text(0.07,0.3,'Onco');
 
-fill([0.2 0.2 0.25 0.25],[0 1 1 0],'g','linestyle','none');
+fill([0.2 0.2 0.25 0.25],[0 1 1 0],c(3),'linestyle','none');
 text(0.27,0.3,'TSG');
 
-fill([0.45 0.45 0.5 0.5],[0 1 1 0],'r','linestyle','none');
+fill([0.45 0.45 0.5 0.5],[0 1 1 0],c(4),'linestyle','none');
 text(0.52,0.3,'Onco & TSG');
 
-fill([0.8 0.8 0.85 0.85],[0 1 1 0],'y','linestyle','none');
+fill([0.8 0.8 0.85 0.85],[0 1 1 0],c(1),'linestyle','none');
 text(0.87,0.3,'Other');
 
 xlim([0 1]);
@@ -94,10 +99,15 @@ end
 box on;
 xlim([0 n]);
 ylim([0 8]);
-xlabel('genes');
 set(gca,'yticklabel',{''});
+set(gca,'xtick',[]);
+set(gca,'xticklabel',{''});
 
-axes('position',[0.2 0.4 hy 0.02]);
+for k=1:n
+    text(k-0.5,-0.2,gene_names(L1(k,1)),'rotation',90,'fontsize',6,'horizontalalignment','right');
+end
+
+axes('position',[0.2 0.38 hy 0.02]);
 hold on;
 box off;
 axis off;
@@ -108,8 +118,8 @@ text(0.03,0.3,'DNA Methylation');
 fill([0.4 0.4 0.41 0.41],[0 1 1 0],'r','linestyle','none');
 text(0.43,0.3,'Mutation');
 
-fill([0.7 0.7 0.71 0.71],[0 1 1 0],'g','linestyle','none');
-text(0.73,0.3,'Both');
+%fill([0.7 0.7 0.71 0.71],[0 1 1 0],'g','linestyle','none');
+%text(0.73,0.3,'Both');
 
 xlim([0 1]);
 ylim([0 1]);
@@ -123,6 +133,8 @@ clf();
 H=H4;
 n=size(H,1);
 L1=L(J0(H),:);
+%dlmwrite(strcat(base_path,'significant_no_genes.ind'),H);
+match_gene_name(J0(H),'significant_no_genes.ind');
 
 
 axes('position',[0.2 0.92 hy 0.02]);
@@ -130,16 +142,16 @@ hold on;
 box off;
 axis off;
 
-fill([0 0 0.05 0.05],[0 1 1 0],'b','linestyle','none');
+fill([0 0 0.05 0.05],[0 1 1 0],c(2),'linestyle','none');
 text(0.07,0.3,'Onco');
 
-fill([0.2 0.2 0.25 0.25],[0 1 1 0],'g','linestyle','none');
+fill([0.2 0.2 0.25 0.25],[0 1 1 0],c(3),'linestyle','none');
 text(0.27,0.3,'TSG');
 
-fill([0.45 0.45 0.5 0.5],[0 1 1 0],'r','linestyle','none');
+fill([0.45 0.45 0.5 0.5],[0 1 1 0],c(4),'linestyle','none');
 text(0.52,0.3,'Onco & TSG');
 
-fill([0.8 0.8 0.85 0.85],[0 1 1 0],'y','linestyle','none');
+fill([0.8 0.8 0.85 0.85],[0 1 1 0],c(1),'linestyle','none');
 text(0.87,0.3,'Other');
 
 xlim([0 1]);
