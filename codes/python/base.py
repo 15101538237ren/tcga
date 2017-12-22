@@ -147,6 +147,25 @@ def label_TSG_or_OncoGene(input_onco_fp, input_tsg_fp):
             gene_categorys[gidx] = 3
     return gene_categorys
 
+def generate_gene_position_info(gene_body_fp):
+    gene_pos_labels = [[-1, -1, -1, -1] for item in GENOME]
+    gene_idxs_dict = {item : gidx for gidx, item in enumerate(GENOME)}
+    chr_dict = {str(i): i for i in range(1, 23)}
+    chr_dict["X"] = 23
+    chr_dict["Y"] = 24
+
+    for line in file(gene_body_fp):
+        line_items = line.strip("\n").split("\t")
+        gene_name = line_items[0].strip('"')
+        if gene_name in GENOME:
+            chr_str = line_items[1].strip('"')
+            if chr_str in chr_dict.keys():
+                chr_no = chr_dict[chr_str]
+                strand = 1 if line_items[4].strip('"') == "+" else 0
+                start = int(line_items[2])
+                end = int(line_items[3])
+                gene_pos_labels[gene_idxs_dict[gene_name]][:] =  [chr_no, start, end ,strand]
+    return gene_pos_labels
 #label whether a gene of GENOME is a TF gene
 def label_TF_genes(input_tf_fp):
     tf_labels = [0 for item in GENOME]
@@ -155,6 +174,13 @@ def label_TF_genes(input_tf_fp):
         if gene_name in tf_genes:
             tf_labels[tidx] = 1
     return tf_labels
+
+CGI_genenames_fp = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
+gene_cgi_labels = label_cgi_genes(CGI_genenames_fp)
+
+tf_genes_fp = os.path.join(global_files_dir, "TF_gene_list.txt")
+tf_gene_labels = label_TF_genes(tf_genes_fp)
+
 origin_onco_fp = os.path.join(global_files_dir, "OncoGene_698.tsv")
 origin_tsg_fp = os.path.join(global_files_dir, "TSG_1018.tsv")
 
@@ -165,12 +191,14 @@ origin_tsg_fp_vogelstein = os.path.join(global_files_dir, "TSG_Vogelstein.txt")
 
 gene_categorys_vogelstein = label_TSG_or_OncoGene(origin_onco_fp_vogelstein, origin_tsg_fp_vogelstein)
 
-CGI_genenames_fp = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
-gene_cgi_labels = label_cgi_genes(CGI_genenames_fp)
+msk_341_fp = os.path.join(global_files_dir, "msk_impact_341_genes.txt")
+msk_341_labels = label_cgi_genes(msk_341_fp)
 
+msk_410_fp = os.path.join(global_files_dir, "msk_impact_410_genes.txt")
+msk_410_labels = label_cgi_genes(msk_410_fp)
 
-tf_genes_fp = os.path.join(global_files_dir, "TF_gene_list.txt")
-tf_gene_labels = label_TF_genes(tf_genes_fp)
+gene_body_fp = os.path.join(global_files_dir, "human_gene_bodys.tsv")
+gene_pos_labels = generate_gene_position_info(gene_body_fp)
 
 #生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg 3: onco_and_tsg)
 def generate_gene_index(gene_idx_fp, gene_label_fp):
@@ -183,7 +211,8 @@ def generate_gene_index(gene_idx_fp, gene_label_fp):
     with open(gene_label_fp,"w") as gene_label_file:
         ltws = []
         for gidx, gene in enumerate(GENOME):
-            ltw = "\t".join([str(gidx + 1), str(gene_cgi_labels[gidx]), str(tf_gene_labels[gidx]), str(gene_categorys[gidx]), str(gene_categorys_vogelstein[gidx])])
+            chr_no, start, end, strand = gene_pos_labels[gidx]
+            ltw = "\t".join([str(gidx + 1), str(gene_cgi_labels[gidx]), str(tf_gene_labels[gidx]), str(gene_categorys[gidx]), str(gene_categorys_vogelstein[gidx]), str(msk_341_labels[gidx]), str(msk_410_labels[gidx]), str(chr_no), str(start), str(end), str(strand)])
             ltws.append(ltw)
         gene_label_file.write("\n".join(ltws))
     print "generate_gene_index successful at %s" % gene_idx_fp
