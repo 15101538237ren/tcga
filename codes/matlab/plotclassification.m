@@ -1,7 +1,7 @@
 function plotclassification()
 global L1 base_path
 mp_score_threshold = 0.8;
-mutation_rate_threshold = 0.2;
+mutation_rate_threshold = 0.1;
 
 genes={'BRCA';'COAD';'LIHC';'KIRC';'KIRP';'LUAD';'LUSC';'THCA'};
 fpre = '../../data/intermediate_file/';
@@ -94,7 +94,7 @@ for i=1:8
             fill([k-1, k-1,k,k],[i-1, i,i,i-1],col(3),'linestyle','none');
         end
     end
-    text(-floor(0.097*n),i-0.8,char(genes(i)),'fontsize',8);
+    text(-floor(0.097*n),i-0.5,char(genes(i)),'fontsize',8);
 end
 box on;
 xlim([0 n]);
@@ -188,7 +188,7 @@ for i=1:8
             fill([k-1, k-1,k,k],[i-1, i,i,i-1],col(3),'linestyle','none');
         end
     end
-    text(-floor(0.097*n),i-0.8,char(genes(i)),'fontsize',8);
+    text(-floor(0.097*n),i-0.5,char(genes(i)),'fontsize',8);
 end
 box on;
 xlim([0 n]);

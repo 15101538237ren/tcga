@@ -308,13 +308,14 @@ def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list
 
     for stage_idx, stage_name in enumerate(stage_list):
         stage_values_length = len(profile['APC'][stage_idx])
+        stage_name_rep = stage_name.replace(" ", "_")
         output_cancer_dir = outdir
         if not os.path.exists(output_cancer_dir):
             os.makedirs(output_cancer_dir)
-        if stage_name != "not reported" and stage_name in profile_uuid.keys() and len(profile_uuid[stage_name]):
-            out_uuid_id_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage_name + "_uuids.txt")
+        if stage_name in profile_uuid.keys() and len(profile_uuid[stage_name]):
+            out_uuid_id_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage_name_rep + "_uuids.txt")
             write_tab_seperated_file_for_a_list(out_uuid_id_path, profile_uuid[stage_name],index_included=True)
-            outfile_path =  os.path.join(output_cancer_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
+            outfile_path =  os.path.join(output_cancer_dir, cancer_name + "_" + stage_name_rep + "_methy_dat.dat")
             outfile = open(outfile_path, "w")
             out_str = []
             header = "\t".join([ str(item) for item in range(len(profile_uuid[stage_name]) + 1)])
@@ -518,6 +519,7 @@ def calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir , sta
         print mi
     np.savetxt(out_corr_dat_fp, corr_matrix, delimiter="\t")
     print "save %s successful!" % out_corr_dat_fp
+
 def calc_methy_correlation_pipeline():
     cancer_name = "COAD"
     middle_name_list = ["pp","pn"]
@@ -530,6 +532,7 @@ def calc_methy_correlation_pipeline():
         methy_in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
         gidx_in_dir = out_dir
         calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir, stage_wanted, middle_name)
+
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
