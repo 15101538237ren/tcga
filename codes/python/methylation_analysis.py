@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from base import *
-methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
 tumor_suppressed_gene_filepath = os.path.join(global_files_dir, "gene_with_protein_product.tsv")
 
@@ -17,45 +16,6 @@ for idx, item in enumerate(merged_stage):
 is_merge_stage = True
 stage_list = methy_and_rna_merged_stages if is_merge_stage else methy_and_rna_stages
 dname = "merged_stage" if is_merge_stage else "stage"
-# 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
-def connect_filename_to_uuid():
-    uuid_to_filename = {}
-    filename_to_uuid = {}
-    now_file = open(methy_manifest_path,'r')
-
-    #pass the header
-    now_file.readline()
-
-    str_pattern = r'([^\t]+)\t([^\t]+)'
-    cancer_pattern = r'jhu-usc.edu_([^\.]+)*'
-    uuid_dict = {cancer_name:[] for cancer_name in cancer_names}
-    file_name_dict={cancer_name:[] for cancer_name in cancer_names}
-
-    line = now_file.readline()
-    while line:
-        match_p = re.search(str_pattern, line)
-        if match_p:
-            uuid = match_p.group(1)
-            file_name = match_p.group(2)
-
-            uuid_to_filename[uuid] = file_name
-            filename_to_uuid[file_name] = uuid
-            try:
-                cancer_name = re.search(cancer_pattern, file_name).group(1)
-                if cancer_name in cancer_names:
-                    uuid_dict[cancer_name].append(uuid)
-                    file_name_dict[cancer_name].append(file_name)
-            except AttributeError:
-                print file_name
-            # print "%s\t%s" % (uuid, file_name)
-
-        line=now_file.readline()
-    now_file.close()
-    print "connect_filename_to_uuid called"
-    return [uuid_to_filename, filename_to_uuid, uuid_dict, file_name_dict]
-
-#returned global vars from connect_filename_to_uuid()
-[uuid_to_filename, filename_to_uuid, uuid_dict, file_name_dict] = connect_filename_to_uuid()
 
 #通过json文件, 获取每个uuid对应的一级癌症阶段merged_tumor_stage和二级癌症阶段tumor_stage
 def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):

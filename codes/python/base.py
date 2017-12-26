@@ -34,6 +34,7 @@ methy_corr_dir = os.path.join(intermediate_file_dir, "methy_corr")
 
 methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
 methy_mean_std_dir = os.path.join(intermediate_file_dir, "methy_mean_std")
+methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 
 dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir,methy_corr_dir]
 
@@ -82,6 +83,46 @@ def read_whole_genenames(file_path):
 
 [GENOME, alias_dict] = read_whole_genenames(genome_gene_path)
 print "length whole genes %d" % len(GENOME)
+
+# 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
+def connect_filename_to_uuid():
+    uuid_to_filename = {}
+    filename_to_uuid = {}
+    now_file = open(methy_manifest_path,'r')
+
+    #pass the header
+    now_file.readline()
+
+    str_pattern = r'([^\t]+)\t([^\t]+)'
+    cancer_pattern = r'jhu-usc.edu_([^\.]+)*'
+    uuid_dict = {cancer_name:[] for cancer_name in cancer_names}
+    file_name_dict={cancer_name:[] for cancer_name in cancer_names}
+
+    line = now_file.readline()
+    while line:
+        match_p = re.search(str_pattern, line)
+        if match_p:
+            uuid = match_p.group(1)
+            file_name = match_p.group(2)
+
+            uuid_to_filename[uuid] = file_name
+            filename_to_uuid[file_name] = uuid
+            try:
+                cancer_name = re.search(cancer_pattern, file_name).group(1)
+                if cancer_name in cancer_names:
+                    uuid_dict[cancer_name].append(uuid)
+                    file_name_dict[cancer_name].append(file_name)
+            except AttributeError:
+                print file_name
+            # print "%s\t%s" % (uuid, file_name)
+
+        line=now_file.readline()
+    now_file.close()
+    print "connect_filename_to_uuid called"
+    return [uuid_to_filename, filename_to_uuid, uuid_dict, file_name_dict]
+
+#returned global vars from connect_filename_to_uuid()
+[uuid_to_filename, filename_to_uuid, uuid_dict, file_name_dict] = connect_filename_to_uuid()
 
 # 向target_file_path中写target_list的值, 如果index_included=True,则第一列为自增索引, 第二列为value
 def write_tab_seperated_file_for_a_list(target_file_path, target_list, index_included=True, sep="\t",line_end = "\n"):
