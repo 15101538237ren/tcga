@@ -10,7 +10,7 @@ global_files_dir = os.path.join(base_dir, "global_files")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir = "/Users/Ren/PycharmProjects/tcga_raw_data"
+raw_data_dir = "/Volumes/Elements/tcga_raw_data" #"/Users/Ren/PycharmProjects/tcga_raw_data"
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
@@ -41,6 +41,8 @@ dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_
 for dir_name in dirs:
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
+
+promoter_length = 2000
 
 #global vars
 tumor_stages = ["normal","i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","x","not reported"]

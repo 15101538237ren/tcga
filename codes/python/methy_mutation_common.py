@@ -19,6 +19,7 @@ def query_submitter_id_of_a_uuid(uuids):
                 submitter_id = "-".join(submitter_id_full.split("-")[0 : 3])
                 submitter_ids.append(submitter_id)
     return submitter_ids
+
 def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
     ltws = ["\t".join(['cancer', '#methy cases', '#mutation cases', '#common cases'])]
     ret_dict = {}
@@ -58,5 +59,35 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
         common_cases_file.write("\n".join(ltws))
         print "write %s successful" % common_cases_path
     return [ret_dict]
+
+def obtain_promoter_and_genebody_methy_status(rtn_list):
+    ret_dict = rtn_list[0]
+
+    for cancer_name in cancer_names:
+        for cancer_stage in common_stages:
+            common_submitter_ids = ret_dict[cancer_name][cancer_stage]['common_submitter_ids']
+            common_filenames = ret_dict[cancer_name][cancer_stage]['common_methy_file_names']
+            ret_dict[cancer_name][cancer_stage]['methy_status'] ={}
+            for gidx, gene_name in enumerate(GENOME):
+                chr_no, start, end, strand = gene_pos_labels[gidx]
+                ret_dict[cancer_name][cancer_stage]['methy_status'][gene_name] = {'chr': chr_no, 'start':start, 'end':end, 'strand': strand, 'submitter_id_promoter_status': {}, 'submitter_id_genebody_status':{}}
+
+            for sidx, csid in enumerate(common_submitter_ids):
+                methy_fp = os.path.join(dna_methy_data_dir, cancer_name,common_filenames[sidx])
+                with open(methy_fp, "r") as methy_file:
+                    #因为计算每个基因在promoter和gene_body, CpG位点在所有样本的平均甲基化水平
+                    methy_file.readline()
+                    line = methy_file.readline()
+                    while line:
+                        line_contents = line.split("\t")
+                        try:
+                            gene_symbols = line_contents[5].split(";")
+                            positions_to_tss = line_contents[8].split(";")
+                            beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
+                            gene_types = line_contents[6].split(";")
+                            for idx, gene_symbol in enumerate(gene_symbols):
+                                if gene_symbol != "." and gene_types[idx] == "protein_coding" and beta_val > 0.0:
+                                    
 if __name__ == '__main__':
-    [ret_dict] = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    obtain_promoter_and_genebody_methy_status(rtn_list)

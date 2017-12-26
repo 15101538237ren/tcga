@@ -96,7 +96,7 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
                     beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
                     gene_types = line_contents[6].split(";")
                     for idx, gene_symbol in enumerate(gene_symbols):
-                        if gene_symbol != "." and (-2000 <= int(positions_to_tss[idx]) <= 0) and beta_val > 0.0:
+                        if gene_symbol != "." and (-promoter_length <= int(positions_to_tss[idx]) <= 0) and beta_val > 0.0:
                             if not whole_genes:
                                 if (gene_symbol in GENOME):
                                     temp_gene_methy_dict[gene_symbol].append(beta_val)
