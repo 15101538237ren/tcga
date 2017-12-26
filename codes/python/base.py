@@ -35,15 +35,17 @@ methy_corr_dir = os.path.join(intermediate_file_dir, "methy_corr")
 methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
 methy_mean_std_dir = os.path.join(intermediate_file_dir, "methy_mean_std")
 methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
+methy_pvalue_dir = os.path.join(intermediate_file_dir, "methy_pvalue")
+common_sample_cnt_dir = os.path.join(intermediate_file_dir, "common_sample_cnt")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir,methy_corr_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir]
 
 for dir_name in dirs:
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
 promoter_length = 2000
-
+pvalue_significant_threshold = -10
 #global vars
 tumor_stages = ["normal","i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","x","not reported"]
 tumor_stage_convert = {"normal":"normal","i":"i","ia":"i","ib":"i","ii":"ii","iia":"ii","iib":"ii","iic":"ii","iii":"iii","iiia":"iii","iiib":"iii","iiic":"iii","iv":"iv","iva":"iv","ivb":"iv","ivc":"iv","x":"x","not reported":"not reported"}

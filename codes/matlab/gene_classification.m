@@ -52,34 +52,13 @@ for i = 1 : len_cancers
     mp_score = load(strcat(fpre, 'methy_pvalue/merged_stage/',cancer_name,'/',cancer_name, '_p_score.dat'));
     mutation_rate  = load(strcat(fpre,'snv_intermidiate/merged_stage/',cancer_name,'/',cancer_name,'_',stage, '_mutation_rate.txt'));
     % class 0
-    none_significants = find(~(mp_score(:, 4) > mp_score_threshold) & entropy_diff(:, 1) > 1 & (mutation_rate(:, 2) < mutation_rate_threshold));
+    none_significants =find(~(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold) & mutation_rate(:, 2) < mutation_rate_threshold);
     % class 1
     methy_significants = find(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold & mutation_rate(:, 2) < mutation_rate_threshold);
     % class 2
     mutation_significants = find(~(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold) & mutation_rate(:, 2) > mutation_rate_threshold);
     % class 3
     both_significants = find(entropy_diff(:, 1) > 1 & mp_score(:, 4) > mp_score_threshold & mutation_rate(:, 2) > mutation_rate_threshold);
-    if i == 2
-        fig1 = figure(1);
-        subplot(2,2,2);
-        hold on;
-        plot(mutation_rate(methy_significants, 2), mp_score(methy_significants, 4),'r.');
-        plot(mutation_rate(mutation_significants, 2), mp_score(mutation_significants, 4),'b.');
-        plot(mutation_rate(both_significants, 2), mp_score(both_significants, 4),'k.');
-        plot(mutation_rate(none_significants, 2), mp_score(none_significants, 4),'g.');
-        line([0,1.0],[0.8,0.8]);
-        line([0.1,0.1],[0, 1.0]);
-        box on;
-        xlim([0 1]);
-        ylim([0 1]);
-        title('Gene Classification');
-        xlabel('Mutation Rate');
-        ylabel('M^+ Score');
-        legend('methylation significants', 'mutation significants', 'both significants','none significants','Location','SouthEast');
-        set(gca,'xtick',[0.1 0.3 0.5 0.8 1.0]);
-        set(gca,'ytick',[0 0.2 0.4 0.6 0.8 1.0]);
-        exportfig(fig1,strcat(out_path, cancer_name,'_genes_scatter.eps'),'color','cmyk');
-    end
     length_vector_genome = zeros(1,4);
     for j = 0:3
         fid = fopen(strcat(out_path,cancer_name, '_', 'genome_class_', num2str(j) ,'.dat'),'w');

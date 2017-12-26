@@ -1,5 +1,7 @@
 # -*- coding:utf-8 -*-
 from base import *
+import pandas as pd
+import numpy as np
 is_merge_stage = True
 common_stages = mutation_merged_stage[0 : -1] if is_merge_stage else mutation_stage[0 : -1]
 dname = "merged_stage" if is_merge_stage else "stage"
@@ -86,8 +88,76 @@ def obtain_promoter_and_genebody_methy_status(rtn_list):
                             beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
                             gene_types = line_contents[6].split(";")
                             for idx, gene_symbol in enumerate(gene_symbols):
-                                if gene_symbol != "." and gene_types[idx] == "protein_coding" and beta_val > 0.0:
-                                    
+                                # if gene_symbol != "." and gene_types[idx] == "protein_coding" and beta_val > 0.0:
+                                pass
+                        except KeyError, e1:
+                            pass
+
+def compute_common_mutation_or_methy_variation_samples():
+    mutation_stage = "i"
+    pvalue_label = "p"
+    sig_file_names = ["significant_genes", "significant_no_genes"]
+    gene_classification_dir_name = "gene_classification_mp_0.8_mut_0.1"
+
+    for cancer_name in cancer_names:
+        if cancer_name == "COAD":
+            mutation_dat_fp = os.path.join(snv_intermidiate_dir, dname, cancer_name, cancer_name + "_" + mutation_stage.replace(" ", "_") + "_mutation_data.dat")
+            mutation_matrix = pd.read_csv(mutation_dat_fp, sep='\t', lineterminator='\n', header=0, index_col=0, dtype=np.int32).values
+
+            pvalue_dat_fp = os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_p" + pvalue_label + "_value.dat")
+            pvalue_matrix = pd.read_csv(pvalue_dat_fp, sep='\t', lineterminator='\n', header=0, index_col=0, dtype=np.float64).values
+
+            for sig_file_name in sig_file_names:
+                significant_gene_ind_fp = os.path.join(intermediate_file_dir, gene_classification_dir_name , sig_file_name + ".ind")
+                sig_gidxs = [int(item) - 1 for item in read_tab_seperated_file_and_get_target_column(1, significant_gene_ind_fp)]
+                len_gidx = len(sig_gidxs)
+
+                common_mutation_samples_matrix = np.ones((len_gidx + 1, len_gidx + 1)) * (-1)
+                common_methy_variation_samples_matrix = np.ones((len_gidx + 1, len_gidx + 1)) * (-1)
+                common_mutation_samples_matrix[0][0] = 0
+                common_methy_variation_samples_matrix[0][0] = 0
+
+                for mi, gidx1 in enumerate(sig_gidxs):
+                    common_mutation_samples_matrix[mi + 1][0] = mi + 1
+                    common_mutation_samples_matrix[0][mi + 1] = mi + 1
+
+                    common_methy_variation_samples_matrix[mi + 1][0] = mi + 1
+                    common_methy_variation_samples_matrix[0][mi + 1] = mi + 1
+
+                    for mj, gidx2 in enumerate(sig_gidxs):
+                        mut_dat_g1 = np.array(mutation_matrix[gidx1])
+
+                        pval_dat_g1 = np.array(pvalue_matrix[gidx1])
+                        if mi == mj:
+                            common_mutation_samples_matrix[mi + 1][mj + 1] = (mut_dat_g1 > 0).sum()
+                            common_methy_variation_samples_matrix[mi + 1][mj + 1] = (pval_dat_g1 < pvalue_significant_threshold).sum()
+                        elif mj < mi:
+                            mut_dat_g2 = np.array(mutation_matrix[gidx2])
+                            common_mut_arr = np.logical_and(mut_dat_g1 > 0, mut_dat_g2 > 0)
+                            common_mutation_sample_count = (common_mut_arr > 0).sum()
+                            common_mutation_samples_matrix[mi + 1][mj + 1] = common_mutation_sample_count
+                            common_mutation_samples_matrix[mj + 1][mi + 1] = common_mutation_sample_count
+
+                            pval_dat_g2 = np.array(pvalue_matrix[gidx2])
+                            common_pval_arr = np.logical_and(pval_dat_g1 < pvalue_significant_threshold, pval_dat_g2 < pvalue_significant_threshold)
+                            common_methy_variation_sample_count = (common_pval_arr > 0).sum()
+                            common_methy_variation_samples_matrix[mi + 1][mj + 1] = common_methy_variation_sample_count
+                            common_methy_variation_samples_matrix[mj + 1][mi + 1] = common_methy_variation_sample_count
+                    print "%s %d of %d" % (sig_file_name, mi, len_gidx)
+                out_dir = os.path.join(common_sample_cnt_dir, dname, cancer_name, sig_file_name)
+                if not os.path.exists(out_dir):
+                    os.makedirs(out_dir)
+                out_gidxs_fp = os.path.join(out_dir, "sig_gidxs.dat")
+                write_tab_seperated_file_for_a_list(out_gidxs_fp, read_tab_seperated_file_and_get_target_column(1, significant_gene_ind_fp), index_included=True)
+
+                out_common_mut_fp = os.path.join(out_dir, "common_mutation_samples_cnt.dat")
+                np.savetxt(out_common_mut_fp, common_mutation_samples_matrix, delimiter="\t")
+                print "save %s successful!" % out_common_mut_fp
+
+                out_common_pval_fp = os.path.join(out_dir, "common_methy_sig_variation_samples_cnt.dat")
+                np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
+                print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
-    rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
-    obtain_promoter_and_genebody_methy_status(rtn_list)
+    # rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    # obtain_promoter_and_genebody_methy_status(rtn_list)
+    compute_common_mutation_or_methy_variation_samples()
