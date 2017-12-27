@@ -10,12 +10,19 @@ my_palette = colorRampPalette(c("green", "yellow", "red"))(n = 300)
 figure_dir = 'figures/common_samples'
 cexrow = 0.8
 ks = 0.8
+pointsz = 12
+res = 300
+wid = 10
 key_title = 'Common Samples'
 for (i in 1 : length(cancers))
 {
   
-  for (j in 1 : 1)#length(gene_types)
+  for (j in 2 : length(gene_types))
   {
+    if (j == 2)
+    {
+      wid = 50
+    }
     cancer_fig_fp = paste(figure_dir, cancers[i], gene_types[j], sep = '/')
     if (!file.exists(cancer_fig_fp))
     {
@@ -32,7 +39,7 @@ for (i in 1 : length(cancers))
     rownames(mut_data)  = gene_names
     colnames(mut_data) = gene_names
     mut_fig_fp = paste(cancer_fig_fp,'mut_heatmap.png', sep = '/')
-    png(mut_fig_fp,width = 10*300,height = 10*300, res = 300,pointsize = 12)
+    png(mut_fig_fp,width = wid*res,height = wid*res, res = res,pointsize = pointsz)
     gplots:::heatmap.2(as.matrix(mut_data),Rowv=F,Colv=F,col = my_palette,tracecol=NA,density.info="none",keysize = ks,cexRow=cexrow,cexCol=cexrow)
     dev.off()
     
@@ -42,7 +49,7 @@ for (i in 1 : length(cancers))
     colnames(methy_data) = gene_names
     
     methy_fig_fp = paste(cancer_fig_fp,'methy_heatmap.png', sep = '/')
-    png(methy_fig_fp,width = 10*300,height = 10*300, res = 300,pointsize = 12)
+    png(methy_fig_fp,width = wid*res,height = wid*res, res = res,pointsize = pointsz)
     gplots:::heatmap.2(as.matrix(methy_data),Rowv=F,Colv=F,col = my_palette,tracecol=NA,density.info="none",keysize = ks,cexRow=cexrow,cexCol=cexrow)
     dev.off()
   }
