@@ -25,8 +25,8 @@ for i = 1: length(cancers)
     xlim([0 3]);
     ylim([0 3.5]);
     box on;
-    xlabel('normal');
-    ylabel('i');
+    xlabel('normal','FontSize',12,'FontWeight','bold');
+    ylabel('i','FontSize',12,'FontWeight','bold');
     title('Entropy of normal and i');
     
     subplot(2,2,2);
@@ -37,8 +37,8 @@ for i = 1: length(cancers)
     xlim([0 3]);
     ylim([0 3.5]);
     box on;
-    xlabel('i');
-    ylabel('ii');
+    xlabel('i','FontSize',12,'FontWeight','bold');
+    ylabel('ii','FontSize',12,'FontWeight','bold');
     title('Entropy of i and ii');
     
     subplot(2,2,3);
@@ -49,8 +49,8 @@ for i = 1: length(cancers)
     xlim([0 3]);
     ylim([0 3.5]);
     box on;
-    xlabel('i');
-    ylabel('iii');
+    xlabel('i','FontSize',12,'FontWeight','bold');
+    ylabel('iii','FontSize',12,'FontWeight','bold');
     title('Entropy of i and iii');
     
     subplot(2,2,4);
@@ -61,8 +61,8 @@ for i = 1: length(cancers)
     xlim([0 3]);
     ylim([0 3.5]);
     box on;
-    xlabel('i');
-    ylabel('iv');
+    xlabel('i','FontSize',12,'FontWeight','bold');
+    ylabel('iv','FontSize',12,'FontWeight','bold');
     title('Entropy of i and iv');
     exportfig(fig,strcat(figure_base_dir,cancer_name,'.eps'),'color','cmyk');
     close all;
