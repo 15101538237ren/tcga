@@ -96,7 +96,7 @@ def obtain_promoter_and_genebody_methy_status(rtn_list):
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
-    sig_file_names = ["significant_genes", "significant_no_genes"]
+    sig_file_names = ["significant_genes"]#,"significant_genes", "significant_no_genes","significant_methy_genes", "significant_mut_genes"
     gene_classification_dir_name = "gene_classification_mp_0.8_mut_0.1"
 
     for cancer_name in cancer_names:
@@ -158,6 +158,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
                 print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
-    rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
-    obtain_promoter_and_genebody_methy_status(rtn_list)
-    # compute_common_mutation_or_methy_variation_samples()
+    # rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    # obtain_promoter_and_genebody_methy_status(rtn_list)
+    compute_common_mutation_or_methy_variation_samples()

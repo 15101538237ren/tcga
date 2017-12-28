@@ -40,7 +40,6 @@ col=['k','r','g','w'];
 H=[H1;H2;H3];
 n=size(H,1);
 L1=L(J0(H),:);
-%dlmwrite(strcat(base_path,'significant_genes.ind'),H);
 match_gene_name(J0(H),'significant_genes.ind');
 
 axes('position',[0.2 0.92 hy 0.02]);
@@ -188,6 +187,10 @@ for i=1:8
             fill([k-1, k-1,k,k],[i-1, i,i,i-1],col(3),'linestyle','none');
         end
     end
+    text(306,-1.7,'TTN','color','black','fontsize',10,'Fontweight','bold');
+    arx = 0.848;
+    ar = annotation('arrow',[arx arx],[0.436 0.475]);
+    ar.LineWidth = 0.6;
     text(-floor(0.097*n),i-0.5,char(genes(i)),'fontsize',8);
 end
 box on;

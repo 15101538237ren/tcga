@@ -5,23 +5,27 @@ cancers = c('COAD')
 base_path = 'data/intermediate_file/common_sample_cnt/merged_stage';
 gene_idx_filepath = 'global_files/gene_idx.txt';
 gene_idxs = read.csv(gene_idx_filepath,header = F,na.strings = "-1",sep = '\t',stringsAsFactors = F)
-gene_types = c('significant_genes','significant_no_genes')
+gene_types = c('significant_genes_all') #'significant_genes','significant_no_genes','significant_methy_genes','significant_mut_genes'
 my_palette = colorRampPalette(c("green", "yellow", "red"))(n = 300)
 figure_dir = 'figures/common_samples'
 cexrow = 0.8
 ks = 0.8
 pointsz = 12
 res = 300
-wid = 10
+wid = 50
 key_title = 'Common Samples'
 for (i in 1 : length(cancers))
 {
   
-  for (j in 2 : length(gene_types))
+  for (j in 1 : length(gene_types))
   {
-    if (j == 2)
+    if (j ==2 || j == 5)
     {
       wid = 50
+    }
+    else if (j ==3 || j == 4)
+    {
+      wid = 40
     }
     cancer_fig_fp = paste(figure_dir, cancers[i], gene_types[j], sep = '/')
     if (!file.exists(cancer_fig_fp))

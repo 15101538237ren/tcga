@@ -42,7 +42,7 @@ for i=1:length(cancers)
             ylabel('Mutation Rate','FontSize',12,'FontWeight','bold');
         end
     end
-    exportfig(fig,strcat(fig_base, cancer_name,'.eps'),'color','cmyk');
+    exportfig(fig,strcat(fig_base, cancer_name,'_keygenes.eps'),'color','cmyk');
     close all;
 end
 end
