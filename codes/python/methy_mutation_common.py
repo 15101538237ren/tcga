@@ -69,6 +69,10 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
     return 0
 
 def obtain_promoter_and_genebody_methy_status():
+    gene_infos = {}
+    for gidx, gene_name in enumerate(GENOME):
+        chr_no, start, end, strand = gene_pos_labels[gidx]
+        gene_infos[gene_name] = {'chr': chr_no, 'start':start, 'end':end, 'strand': strand}
 
     for cancer_name in cancer_names:
         for cancer_stage in common_stages:
@@ -77,15 +81,13 @@ def obtain_promoter_and_genebody_methy_status():
             out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1,out_idx_fp)
             common_filenames = read_tab_seperated_file_and_get_target_column(2,out_idx_fp)
-            # ret_dict[cancer_name][cancer_stage]['methy_status'] ={}
-            for gidx, gene_name in enumerate(GENOME):
-                chr_no, start, end, strand = gene_pos_labels[gidx]
-                # ret_dict[cancer_name][cancer_stage]['methy_status'][gene_name] = {'chr': chr_no, 'start':start, 'end':end, 'strand': strand, 'submitter_id_promoter_status': {}, 'submitter_id_genebody_status':{}}
 
             for sidx, csid in enumerate(common_submitter_ids):
-                methy_fp = os.path.join(dna_methy_data_dir, cancer_name,common_filenames[sidx])
+                out_methy_fp = os.path.join(out_idx_dir, str(sidx + 1) + '_methy.tsv')
+                methy_dict = {gene_name: [] for gene_name in GENOME}
+                methy_fp = os.path.join(dna_methy_data_dir, cancer_name, common_filenames[sidx])
                 with open(methy_fp, "r") as methy_file:
-                    #因为计算每个基因在promoter和gene_body, CpG位点在所有样本的平均甲基化水平
+                    #因为计算每个基因在promoter(通过distance_to_tss判断)和gene_body(通过cpg位置判断), CpG位点的甲基化水平
                     methy_file.readline()
                     line = methy_file.readline()
                     while line:
@@ -96,11 +98,24 @@ def obtain_promoter_and_genebody_methy_status():
                             beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
                             gene_types = line_contents[6].split(";")
                             for idx, gene_symbol in enumerate(gene_symbols):
-                                # if gene_symbol != "." and gene_types[idx] == "protein_coding" and beta_val > 0.0:
-                                pass
+                                if gene_symbol != "." and gene_types[idx] == "protein_coding" and beta_val > 0.0:
+                                    cpg_start = int(line_contents[3])
+                                    g_start = gene_infos[gene_symbol]["start"]
+                                    g_end = gene_infos[gene_symbol]["end"]
+                                    if (positions_to_tss[idx] > - promoter_length) or (g_start<= cpg_start <= g_end):
+                                        methy_dict[gene_symbol].append(str(positions_to_tss[idx]) + "," + str(beta_val))
                         except KeyError, e1:
-                            pass
-
+                            print e1
+                with open(out_methy_fp,"w") as out_methy_file:
+                    ltws = []
+                    for gidx, gene_name in enumerate(GENOME):
+                        if len(methy_dict[gene_name]):
+                            ltw = str(gidx) + "\t" + ";".join(methy_dict[gene_name])
+                        else:
+                            ltw = str(gidx)
+                        ltws.append(ltw)
+                    out_methy_file.write("\n".join(ltws))
+                    print "write %s successful" % out_methy_fp
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
