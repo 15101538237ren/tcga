@@ -73,21 +73,21 @@ def obtain_promoter_and_genebody_methy_status():
     gene_infos = {}
     for gidx, gene_name in enumerate(GENOME):
         chr_no, start, end, strand = gene_pos_labels[gidx]
-        gene_infos[gene_name] = {'chr': chr_no, 'start':start, 'end':end, 'strand': strand}
+        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
     tot_time = 0.0
     for cancer_name in cancer_names:
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
             out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
             out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
-            common_submitter_ids = read_tab_seperated_file_and_get_target_column(1,out_idx_fp)
-            common_filenames = read_tab_seperated_file_and_get_target_column(2,out_idx_fp)
+            common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
+            common_filenames = read_tab_seperated_file_and_get_target_column(2, out_idx_fp)
 
             for sidx, csid in enumerate(common_submitter_ids):
                 print "%s %s %d of %d" % (cancer_name, cancer_stage, sidx + 1, len(common_submitter_ids))
                 t0 = time.time()
                 out_methy_fp = os.path.join(out_idx_dir, str(sidx + 1) + '_methy.tsv')
-                methy_dict = {gene_name: [] for gene_name in GENOME}
+                methy_dict = {gene_name: {} for gene_name in GENOME}
                 methy_fp = os.path.join(dna_methy_data_dir, cancer_name, common_filenames[sidx])
                 line_counter = 1
                 with open(methy_fp, "r") as methy_file:
@@ -98,7 +98,6 @@ def obtain_promoter_and_genebody_methy_status():
                         try:
                             line_contents = line.split("\t")
                             gene_symbols = line_contents[5].split(";")
-                            positions_to_tss = line_contents[8].split(";")
                             beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
                             gene_types = line_contents[6].split(";")
                             for idx, gene_symbol in enumerate(gene_symbols):
@@ -106,8 +105,11 @@ def obtain_promoter_and_genebody_methy_status():
                                     cpg_start = int(line_contents[3])
                                     g_start = gene_infos[gene_symbol]["start"]
                                     g_end = gene_infos[gene_symbol]["end"]
-                                    if (positions_to_tss[idx] > - promoter_length) or (g_start<= cpg_start <= g_end):
-                                        methy_dict[gene_symbol].append(str(positions_to_tss[idx]) + "," + str(beta_val))
+                                    g_strand = gene_infos[gene_symbol]["strand"]
+                                    pttss = cpg_start - g_start if g_strand else g_end - cpg_start
+                                    #要么是启动子，要么在gene body
+                                    if (- promoter_length < pttss < 0) or (g_start <= cpg_start <= g_end):
+                                        methy_dict[gene_symbol][pttss] = ",".join([str(pttss), str(cpg_start), str(beta_val)])
                                         break
                         except KeyError, e1:
                             pass
@@ -117,10 +119,15 @@ def obtain_promoter_and_genebody_methy_status():
                 with open(out_methy_fp,"w") as out_methy_file:
                     ltws = []
                     for gidx, gene_name in enumerate(GENOME):
-                        if len(methy_dict[gene_name]):
-                            ltw = str(gidx) + "\t" + ";".join(methy_dict[gene_name])
+                        if methy_dict[gene_name]:
+                            sorted_dict = methy_dict[gene_name]
+                            sorted_dict = sorted(sorted_dict.items(), key=lambda d: d[0])
+                            ltw_t = []
+                            for k, v in sorted_dict:
+                                ltw_t.append(v)
+                            ltw = str(gidx + 1) + "\t" + ";".join(ltw_t)
                         else:
-                            ltw = str(gidx)
+                            ltw = str(gidx + 1)
                         ltws.append(ltw)
                     out_methy_file.write("\n".join(ltws))
                     print "write %s successful" % out_methy_fp
@@ -194,6 +201,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
                 print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
-    extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     obtain_promoter_and_genebody_methy_status()
     # compute_common_mutation_or_methy_variation_samples()

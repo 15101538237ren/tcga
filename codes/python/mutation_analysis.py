@@ -261,7 +261,7 @@ for cancer_name in cancer_names:
         break
 
 if __name__ == '__main__':
-    # dna_mutation_data_transform_pipline()
+    dna_mutation_data_transform_pipline()
     calc_mutation_rate()
     #
     pass
