@@ -2,6 +2,7 @@
 from base import *
 import pandas as pd
 import numpy as np
+import time
 is_merge_stage = True
 common_stages = mutation_merged_stage[0 : -1] if is_merge_stage else mutation_stage[0 : -1]
 dname = "merged_stage" if is_merge_stage else "stage"
@@ -73,7 +74,7 @@ def obtain_promoter_and_genebody_methy_status():
     for gidx, gene_name in enumerate(GENOME):
         chr_no, start, end, strand = gene_pos_labels[gidx]
         gene_infos[gene_name] = {'chr': chr_no, 'start':start, 'end':end, 'strand': strand}
-
+    tot_time = 0.0
     for cancer_name in cancer_names:
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
@@ -83,16 +84,19 @@ def obtain_promoter_and_genebody_methy_status():
             common_filenames = read_tab_seperated_file_and_get_target_column(2,out_idx_fp)
 
             for sidx, csid in enumerate(common_submitter_ids):
+                print "%s %s %d of %d" % (cancer_name, cancer_stage, sidx + 1, len(common_submitter_ids))
+                t0 = time.time()
                 out_methy_fp = os.path.join(out_idx_dir, str(sidx + 1) + '_methy.tsv')
                 methy_dict = {gene_name: [] for gene_name in GENOME}
                 methy_fp = os.path.join(dna_methy_data_dir, cancer_name, common_filenames[sidx])
+                line_counter = 1
                 with open(methy_fp, "r") as methy_file:
                     #因为计算每个基因在promoter(通过distance_to_tss判断)和gene_body(通过cpg位置判断), CpG位点的甲基化水平
                     methy_file.readline()
                     line = methy_file.readline()
                     while line:
-                        line_contents = line.split("\t")
                         try:
+                            line_contents = line.split("\t")
                             gene_symbols = line_contents[5].split(";")
                             positions_to_tss = line_contents[8].split(";")
                             beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
@@ -104,8 +108,12 @@ def obtain_promoter_and_genebody_methy_status():
                                     g_end = gene_infos[gene_symbol]["end"]
                                     if (positions_to_tss[idx] > - promoter_length) or (g_start<= cpg_start <= g_end):
                                         methy_dict[gene_symbol].append(str(positions_to_tss[idx]) + "," + str(beta_val))
+                                        break
                         except KeyError, e1:
-                            print e1
+                            pass
+                        line = methy_file.readline()
+                        line_counter += 1
+                print "line_counter %d" % line_counter
                 with open(out_methy_fp,"w") as out_methy_file:
                     ltws = []
                     for gidx, gene_name in enumerate(GENOME):
@@ -116,6 +124,11 @@ def obtain_promoter_and_genebody_methy_status():
                         ltws.append(ltw)
                     out_methy_file.write("\n".join(ltws))
                     print "write %s successful" % out_methy_fp
+                t1 = time.time()
+                t_used_time = t1 - t0
+                tot_time += t_used_time
+                remain_time = (tot_time / (sidx + 1.0)) * (len(common_submitter_ids) - sidx - 1.0)
+                print "%d of %d, %.2f%%, Total Time: %.2f, Time Left: %.2f" % (sidx + 1, len(common_submitter_ids), (sidx + 1.0)/len(common_submitter_ids), t1 - t0, remain_time)
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
