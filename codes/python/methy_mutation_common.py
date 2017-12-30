@@ -135,7 +135,7 @@ def obtain_promoter_and_genebody_methy_status():
                 t_used_time = t1 - t0
                 tot_time += t_used_time
                 remain_time = (tot_time / (sidx + 1.0)) * (len(common_submitter_ids) - sidx - 1.0)
-                print "%d of %d, %.2f%%, Total Time: %.2f, Time Left: %.2f" % (sidx + 1, len(common_submitter_ids), (sidx + 1.0)/len(common_submitter_ids), t1 - t0, remain_time)
+                print "%d of %d, %.2f%%, Total Time: %.2f, Time Left: %.2f" % (sidx + 1, len(common_submitter_ids), (sidx + 1.0)/len(common_submitter_ids), tot_time, remain_time)
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
