@@ -194,6 +194,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
                 print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
-    #extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     obtain_promoter_and_genebody_methy_status()
     # compute_common_mutation_or_methy_variation_samples()
