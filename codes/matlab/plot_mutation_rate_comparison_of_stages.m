@@ -70,11 +70,11 @@ for i = 1: length(cancers)
     legend('APC','TP53','KRAS','PIK3CA');
     title('Mutation Rate Variation of Key Genes');
     xlabel('Stage','FontSize',12,'FontWeight','bold');
-    xlim([0 4.5]);
-    ylim([0 1]);
+    xlim([1 4.2]);
+    ylim([0 0.2]);
     box on;
     set(gca,'xtick',[1,2,3,4]);
-    set(gca,'ytick',[0.2, 0.4, 0.6, 0.8, 1.0]);
+    set(gca,'ytick',[0.05,0.1,0.15,0.2]);
     set(gca,'xticklabel',{'i','ii','iii','iv'});
     ylabel('Mutation Rate','FontSize',12,'FontWeight','bold');
     exportfig(fig,strcat(fig_base,cancer_name,'.eps'),'color','cmyk');

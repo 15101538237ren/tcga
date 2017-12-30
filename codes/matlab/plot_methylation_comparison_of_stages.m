@@ -36,6 +36,8 @@ for i = 1: length(cancers)
     hold on;
     plot(Mn0(:,1),M10(:,1),'.');
     plot([0 1], [0 1],'color','r');
+    plot([0 0.8],[0.2 1],'color','r','linestyle','--');
+    plot([0.2 1],[0 0.8],'color','r','linestyle','--');
     xlim([0 1]);
     ylim([0 1]);
     box on;
@@ -47,6 +49,8 @@ for i = 1: length(cancers)
     hold on;
     plot(M10(:,1),M20(:,1),'.');
     plot([0 1], [0 1],'color','r');
+    plot([0 0.8],[0.2 1],'color','r','linestyle','--');
+    plot([0.2 1],[0 0.8],'color','r','linestyle','--');
     xlim([0 1]);
     ylim([0 1]);
     box on;
@@ -58,6 +62,8 @@ for i = 1: length(cancers)
     hold on;
     plot(M10(:,1),M30(:,1),'.');
     plot([0 1], [0 1],'color','r');
+    plot([0 0.8],[0.2 1],'color','r','linestyle','--');
+    plot([0.2 1],[0 0.8],'color','r','linestyle','--');
     xlim([0 1]);
     ylim([0 1]);
     box on;
@@ -69,6 +75,8 @@ for i = 1: length(cancers)
     hold on;
     plot(M10(:,1),M40(:,1),'.');
     plot([0 1], [0 1],'color','r');
+    plot([0 0.8],[0.2 1],'color','r','linestyle','--');
+    plot([0.2 1],[0 0.8],'color','r','linestyle','--');
     xlim([0 1]);
     ylim([0 1]);
     box on;

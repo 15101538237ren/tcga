@@ -19,8 +19,8 @@ gene_type_names = {'Significant TSG & Onco Genes of Zhao list';'Significant Othe
 fig_names = {'Significant_Genes';'Vogelstein_Genes'};
 plot_region = [0.3 0.1 0.4 0.85];
 mid = 0.5;
-dis_l = 0.06;
-dis_r = 0.04;
+dis_l = 0.02;
+dis_r = 0.02;
 
 for i = 1: 2
     fig = figure(i);

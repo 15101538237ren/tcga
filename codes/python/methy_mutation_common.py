@@ -23,16 +23,20 @@ def query_submitter_id_of_a_uuid(uuids):
     return submitter_ids
 
 def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
-    ltws = ["\t".join(['cancer', '#methy cases', '#mutation cases', '#common cases'])]
+    ltws = ["\t".join(['cancer', '#methy (cases)', '#mutation', '#total common', '#i', '#ii', '#iii', '#iv'])]
     ret_dict = {}
     for cancer_name in cancer_names:
         ret_dict[cancer_name] = {}
         methy_tot = 0
         mut_tot = 0
         common_tot = 0
+        ltw_of_stage_common = []
         for cancer_stage in common_stages:
             ret_dict[cancer_name][cancer_stage] = {}
             cancer_stage_rep = cancer_stage.replace(" ", "_")
+            out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
+            if not os.path.exists(out_idx_dir):
+                os.makedirs(out_idx_dir)
             mutation_submitter_ids_fp = os.path.join(snv_intermidiate_dir, dname, cancer_name, cancer_name + "_" + cancer_stage_rep + "_submitter_ids.txt")
             mutation_submitter_ids = read_tab_seperated_file_and_get_target_column(1, mutation_submitter_ids_fp)
             mut_tot += len(mutation_submitter_ids)
@@ -45,7 +49,6 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
             ret_dict[cancer_name][cancer_stage]['mutation_submitter_ids'] = mutation_submitter_ids
             ret_dict[cancer_name][cancer_stage]['methy_uuids'] = methy_uuids
             ret_dict[cancer_name][cancer_stage]['methy_submitter_ids'] = methy_submitter_ids
-            ret_dict[cancer_name][cancer_stage]['methy_file_name_dict'] = methy_file_name_dict
 
             methy_tot += len(methy_uuids)
             if len(methy_uuids) == len(methy_submitter_ids):
@@ -54,7 +57,20 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
                 ret_dict[cancer_name][cancer_stage]['common_submitter_ids'] = common_submitter_ids
                 ret_dict[cancer_name][cancer_stage]['common_methy_file_names'] = [methy_file_name_dict[item] for item in common_submitter_ids]
 
-        ltw = "\t".join([cancer_name, str(methy_tot), str(mut_tot), str(common_tot)])
+                ltw_of_stage_common.append(str(len(common_submitter_ids)))
+
+                out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+                with open(out_idx_fp, "w") as out_idx_file:
+                    tltws = []
+                    for common_idx in range(len(common_submitter_ids)):
+                        cidx = str(common_idx + 1)
+                        c_submitter_id =  common_submitter_ids[common_idx]
+                        c_methy_filename = ret_dict[cancer_name][cancer_stage]['common_methy_file_names'][common_idx]
+                        tltws.append("\t".join([cidx, c_submitter_id, c_methy_filename]))
+                    out_idx_file.write('\n'.join(tltws))
+        ltw_arr = [cancer_name, str(methy_tot), str(mut_tot), str(common_tot)]
+        ltw_arr.extend(ltw_of_stage_common)
+        ltw = "\t".join(ltw_arr)
         ltws.append(ltw)
 
     with open(common_cases_path,"w") as common_cases_file:
@@ -158,6 +174,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
                 print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
-    # rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    rtn_list = extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     # obtain_promoter_and_genebody_methy_status(rtn_list)
-    compute_common_mutation_or_methy_variation_samples()
+    # compute_common_mutation_or_methy_variation_samples()

@@ -37,8 +37,9 @@ methy_mean_std_dir = os.path.join(intermediate_file_dir, "methy_mean_std")
 methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 methy_pvalue_dir = os.path.join(intermediate_file_dir, "methy_pvalue")
 common_sample_cnt_dir = os.path.join(intermediate_file_dir, "common_sample_cnt")
+common_patient_data_dir = os.path.join(intermediate_file_dir, "common_patients_data")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir,common_patient_data_dir]
 
 for dir_name in dirs:
     if not os.path.exists(dir_name):
