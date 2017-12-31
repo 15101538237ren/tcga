@@ -138,13 +138,16 @@ def obtain_promoter_and_genebody_mutation_status():
     for gidx, gene_name in enumerate(GENOME):
         chr_no, start, end, strand = gene_pos_labels[gidx]
         gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
+
     tot_time = 0.0
 
     for cid, cancer_name in enumerate(cancer_names):
         print "%s %d of %d" % (cancer_name, cid + 1, len(cancer_names))
         t0 = time.time()
+
         submitter_id_to_stage = {}
         SNP_INS_DEL_dict = [{}, {}, {}]
+
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
             for iclass in range(len(SNP_Ins_Del_classification.keys())):
@@ -153,14 +156,12 @@ def obtain_promoter_and_genebody_mutation_status():
             out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
             out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
+
             for common_submitter_id in common_submitter_ids:
                 submitter_id_to_stage[common_submitter_id] = cancer_stage_rep
-                for iclass in range(len(SNP_Ins_Del_classification.keys())):
-                    SNP_INS_DEL_dict[iclass][cancer_stage_rep][common_submitter_id] = {}
 
-                for gene_name in GENOME:
-                    for iclass in range(len(SNP_Ins_Del_classification.keys())):
-                        SNP_INS_DEL_dict[iclass][cancer_stage_rep][common_submitter_id][gene_name] = {}
+                for iclass in range(len(SNP_Ins_Del_classification.keys())):
+                    SNP_INS_DEL_dict[iclass][cancer_stage_rep][common_submitter_id] = { gene_name:{} for gene_name in GENOME}
 
         cancer_mut_data_dir = os.path.join(snv_data_dir, cancer_name)
         file_names = os.listdir(cancer_mut_data_dir)
@@ -173,7 +174,10 @@ def obtain_promoter_and_genebody_mutation_status():
                     for i in range(6):
                         snv_file.readline()
                     line = snv_file.readline()
+                    line_cnt = 0
                     while line:
+                        if line_cnt % 1000 == 0:
+                            print line_cnt
                         try:
                             line_contents = line.split("\t")
                             bar_code = line_contents[15]
@@ -192,15 +196,15 @@ def obtain_promoter_and_genebody_mutation_status():
 
                                     v_start = int(line_contents[5])
                                     v_end = int(line_contents[6])
-                                    v_context = line_contents[111]
 
                                     if variant_type == "SNP":
                                         pttss = v_start - g_start if g_strand else g_end - v_start
                                         HGVScs = line_contents[34].split(">")
+                                        v_context = line_contents[111]
                                         if (- promoter_length < pttss < 0) or (g_start <= v_start <= g_end):
                                             SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
                                                 submitter_id][gname] = {'rel_start':pttss, 'class':mutation_classification[variant_class],
-                                                                        'context':v_context, 'change': HGVScs[0][-1] + ">" + HGVScs[1]}
+                                                                        'context':v_context, 'change': HGVScs[0][-1] + "->" + HGVScs[1]}
                                     else:
                                         p_start = g_start - promoter_length if g_strand else g_start
                                         p_end = g_end if g_strand else g_end + promoter_length
@@ -214,6 +218,7 @@ def obtain_promoter_and_genebody_mutation_status():
                         except KeyError,e1:
                             pass
                         line = snv_file.readline()
+                        line_cnt += 1
                     print "end %s" % file_path
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
@@ -221,13 +226,14 @@ def obtain_promoter_and_genebody_mutation_status():
             out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
             for sidx, csid in enumerate(common_submitter_ids):
-                for iclass, key in SNP_Ins_Del_classification.items():
+
+                for key, iclass in SNP_Ins_Del_classification.items():
                     out_mut_fp = os.path.join(out_idx_dir, str(sidx + 1) + '_' + key + '.tsv')
                     with open(out_mut_fp, "w") as out_mut_file:
                         ltws = []
                         for gidx, gene_name in enumerate(GENOME):
-                            if len(SNP_INS_DEL_dict[key][cancer_stage][csid][gene_name].keys()) > 0:
-                                sorted_dict = SNP_INS_DEL_dict[key][cancer_stage][csid][gene_name]
+                            if len(SNP_INS_DEL_dict[iclass][cancer_stage_rep][csid][gene_name].keys()) > 0:
+                                sorted_dict = SNP_INS_DEL_dict[iclass][cancer_stage_rep][csid][gene_name]
                                 sorted_dict = sorted(sorted_dict.items(), key=lambda d: d[0]['rel_start'])
                                 ltw_t = []
                                 if key == "SNP":
