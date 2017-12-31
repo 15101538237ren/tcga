@@ -10,7 +10,7 @@ global_files_dir = os.path.join(base_dir, "global_files")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir = "/disk/tcga_raw_data" #/Volumes/Elements/tcga_raw_data
+raw_data_dir = "/Volumes/Elements/tcga_raw_data" #
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
@@ -59,7 +59,14 @@ mutation_merged_stage = ["i","ii","iii","iv","not reported"]
 mutation_stage = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","not reported"]
 
 all_cancer_names = ["BRCA", "COAD", "LIHC", "LUAD", "LUSC","BLCA" ,"ESCA","HNSC" ,"KIRC", "KIRP", "PAAD", "READ", "THCA", "STAD","LGG","OV","GBM","LAML", "PRAD","UCEC","SARC", "UVM","CESC", "DLBC"]
-cancer_names = ["COAD","BRCA", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"]
+cancer_names = ["BRCA", "COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"]
+
+SNP_Ins_Del_classification = {"SNP":0, "INS": 1, "DEL":2}
+mutation_classification = {"Frame_Shift_Ins":1, "In_Frame_Ins":2, "Frame_Shift_Del":3, "In_Frame_Del":4,
+                           "Missense_Mutation":5, "Translation_Start_Site":6 , "Splice_Region":7, "Splice_Site":8,
+                           "3'UTR":9, "5'UTR":10, "3'Flank":11, "5'Flank":12,
+                           "Nonsense_Mutation":13, "Nonstop_Mutation":14,
+                           "RNA":15, "Silent":16, "IGR":17, "Intron":18}
 
 genome_gene_path = os.path.join(global_files_dir, "gene_with_protein_product.tsv")
 

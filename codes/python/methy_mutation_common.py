@@ -89,7 +89,6 @@ def obtain_promoter_and_genebody_methy_status():
                 out_methy_fp = os.path.join(out_idx_dir, str(sidx + 1) + '_methy.tsv')
                 methy_dict = {gene_name: {} for gene_name in GENOME}
                 methy_fp = os.path.join(dna_methy_data_dir, cancer_name, common_filenames[sidx])
-                line_counter = 1
                 with open(methy_fp, "r") as methy_file:
                     #因为计算每个基因在promoter(通过distance_to_tss判断)和gene_body(通过cpg位置判断), CpG位点的甲基化水平
                     methy_file.readline()
@@ -114,8 +113,6 @@ def obtain_promoter_and_genebody_methy_status():
                         except KeyError, e1:
                             pass
                         line = methy_file.readline()
-                        line_counter += 1
-                print "line_counter %d" % line_counter
                 with open(out_methy_fp,"w") as out_methy_file:
                     ltws = []
                     for gidx, gene_name in enumerate(GENOME):
@@ -136,6 +133,123 @@ def obtain_promoter_and_genebody_methy_status():
                 tot_time += t_used_time
                 remain_time = (tot_time / (sidx + 1.0)) * (len(common_submitter_ids) - sidx - 1.0)
                 print "%d of %d, %.2f%%, Total Time: %.2f, Time Left: %.2f" % (sidx + 1, len(common_submitter_ids), (sidx + 1.0)/len(common_submitter_ids), tot_time, remain_time)
+def obtain_promoter_and_genebody_mutation_status():
+    gene_infos = {}
+    for gidx, gene_name in enumerate(GENOME):
+        chr_no, start, end, strand = gene_pos_labels[gidx]
+        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
+    tot_time = 0.0
+
+    for cid, cancer_name in enumerate(cancer_names):
+        print "%s %d of %d" % (cancer_name, cid + 1, len(cancer_names))
+        t0 = time.time()
+        submitter_id_to_stage = {}
+        SNP_INS_DEL_dict = [{}, {}, {}]
+        for cancer_stage in common_stages:
+            cancer_stage_rep = cancer_stage.replace(" ", "_")
+            for iclass in range(len(SNP_Ins_Del_classification.keys())):
+                SNP_INS_DEL_dict[iclass][cancer_stage_rep] = {}
+
+            out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
+            out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+            common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
+            for common_submitter_id in common_submitter_ids:
+                submitter_id_to_stage[common_submitter_id] = cancer_stage_rep
+                for iclass in range(len(SNP_Ins_Del_classification.keys())):
+                    SNP_INS_DEL_dict[iclass][cancer_stage_rep][common_submitter_id] = {}
+
+                for gene_name in GENOME:
+                    for iclass in range(len(SNP_Ins_Del_classification.keys())):
+                        SNP_INS_DEL_dict[iclass][cancer_stage_rep][common_submitter_id][gene_name] = {}
+
+        cancer_mut_data_dir = os.path.join(snv_data_dir, cancer_name)
+        file_names = os.listdir(cancer_mut_data_dir)
+        for file_name in file_names:
+            if file_name.startswith("TCGA." + cancer_name + ".mutect"):
+                file_path = os.path.join(cancer_mut_data_dir, file_name)
+                with open(file_path, "r") as snv_file:
+                    print "start %s" % file_path
+                    # pass head 6 lines
+                    for i in range(6):
+                        snv_file.readline()
+                    line = snv_file.readline()
+                    while line:
+                        try:
+                            line_contents = line.split("\t")
+                            bar_code = line_contents[15]
+                            submitter_id = "-".join(bar_code.split("-")[0:3])
+                            #common submitter id
+                            if submitter_id in submitter_id_to_stage.keys():
+                                variant_type = line_contents[9]
+                                if variant_type in SNP_Ins_Del_classification.keys():
+                                    gname = line_contents[0]
+                                    g_start = gene_infos[gname]["start"]
+                                    g_end = gene_infos[gname]["end"]
+                                    g_strand = gene_infos[gname]["strand"]
+
+                                    s_stage = submitter_id_to_stage[submitter_id]
+                                    variant_class = line_contents[8]
+
+                                    v_start = int(line_contents[5])
+                                    v_end = int(line_contents[6])
+                                    v_context = line_contents[111]
+
+                                    if variant_type == "SNP":
+                                        pttss = v_start - g_start if g_strand else g_end - v_start
+                                        HGVScs = line_contents[34].split(">")
+                                        if (- promoter_length < pttss < 0) or (g_start <= v_start <= g_end):
+                                            SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
+                                                submitter_id][gname] = {'rel_start':pttss, 'class':mutation_classification[variant_class],
+                                                                        'context':v_context, 'change': HGVScs[0][-1] + ">" + HGVScs[1]}
+                                    else:
+                                        p_start = g_start - promoter_length if g_strand else g_start
+                                        p_end = g_end if g_strand else g_end + promoter_length
+                                        reference_allele = line_contents[10]
+                                        if (p_start <= v_start) and (v_end <= p_end):
+                                            s_to_tss = v_start - g_start if g_strand else g_end - v_start
+                                            e_to_tss = v_end - g_start if g_strand else g_end - v_end
+                                            SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
+                                                submitter_id][gname] = {'rel_start': s_to_tss, 'rel_end':e_to_tss,
+                                                                        'class': mutation_classification[variant_class], 'change': reference_allele}
+                        except KeyError,e1:
+                            pass
+                        line = snv_file.readline()
+                    print "end %s" % file_path
+        for cancer_stage in common_stages:
+            cancer_stage_rep = cancer_stage.replace(" ", "_")
+            out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
+            out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+            common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
+            for sidx, csid in enumerate(common_submitter_ids):
+                for iclass, key in SNP_Ins_Del_classification.items():
+                    out_mut_fp = os.path.join(out_idx_dir, str(sidx + 1) + '_' + key + '.tsv')
+                    with open(out_mut_fp, "w") as out_mut_file:
+                        ltws = []
+                        for gidx, gene_name in enumerate(GENOME):
+                            if len(SNP_INS_DEL_dict[key][cancer_stage][csid][gene_name].keys()) > 0:
+                                sorted_dict = SNP_INS_DEL_dict[key][cancer_stage][csid][gene_name]
+                                sorted_dict = sorted(sorted_dict.items(), key=lambda d: d[0]['rel_start'])
+                                ltw_t = []
+                                if key == "SNP":
+                                    for k, v in sorted_dict:
+                                        ltw_temp = ",".join([str(v['rel_start']),str(v['class']),v['change'],v['context']])
+                                        ltw_t.append(ltw_temp)
+                                else:
+                                    for k, v in sorted_dict:
+                                        ltw_temp = ",".join([str(v['rel_start']),str(v['rel_end']), str(v['class']), v['change']])
+                                        ltw_t.append(ltw_temp)
+                                ltw = str(gidx + 1) + "\t" + ";".join(ltw_t)
+                            else:
+                                ltw = str(gidx + 1)
+                            ltws.append(ltw)
+                            out_mut_file.write("\n".join(ltws))
+                        print "write %s successful" % out_mut_fp
+
+        t1 = time.time()
+        t_used_time = t1 - t0
+        tot_time += t_used_time
+        remain_time = (tot_time / (cid + 1.0)) * (len(cancer_names) - cid - 1.0)
+        print "%d of %d, %.2f, Total Time: %.2f, Time Left: %.2f" % (cid + 1, len(cancer_names), (cid + 1.0) / len(cancer_names), tot_time, remain_time)
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
@@ -202,5 +316,5 @@ def compute_common_mutation_or_methy_variation_samples():
                 print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
     # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
-    obtain_promoter_and_genebody_methy_status()
+    obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
