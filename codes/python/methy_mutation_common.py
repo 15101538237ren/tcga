@@ -174,10 +174,7 @@ def obtain_promoter_and_genebody_mutation_status():
                     for i in range(6):
                         snv_file.readline()
                     line = snv_file.readline()
-                    line_cnt = 0
                     while line:
-                        if line_cnt % 1000 == 0:
-                            print line_cnt
                         try:
                             line_contents = line.split("\t")
                             bar_code = line_contents[15]
@@ -200,11 +197,15 @@ def obtain_promoter_and_genebody_mutation_status():
                                     if variant_type == "SNP":
                                         pttss = v_start - g_start if g_strand else g_end - v_start
                                         HGVScs = line_contents[34].split(">")
+                                        if len(HGVScs) >= 2:
+                                            change = HGVScs[0][-1] + "->" + HGVScs[1]
+                                        else:
+                                            change = '-'
                                         v_context = line_contents[111]
                                         if (- promoter_length < pttss < 0) or (g_start <= v_start <= g_end):
                                             SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
-                                                submitter_id][gname] = {'rel_start':pttss, 'class':mutation_classification[variant_class],
-                                                                        'context':v_context, 'change': HGVScs[0][-1] + "->" + HGVScs[1]}
+                                                submitter_id][gname][pttss] = {'rel_start':pttss, 'class':mutation_classification[variant_class],
+                                                                        'context':v_context, 'change': change}
                                     else:
                                         p_start = g_start - promoter_length if g_strand else g_start
                                         p_end = g_end if g_strand else g_end + promoter_length
@@ -213,12 +214,11 @@ def obtain_promoter_and_genebody_mutation_status():
                                             s_to_tss = v_start - g_start if g_strand else g_end - v_start
                                             e_to_tss = v_end - g_start if g_strand else g_end - v_end
                                             SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
-                                                submitter_id][gname] = {'rel_start': s_to_tss, 'rel_end':e_to_tss,
+                                                submitter_id][gname][s_to_tss] = {'rel_start': s_to_tss, 'rel_end':e_to_tss,
                                                                         'class': mutation_classification[variant_class], 'change': reference_allele}
                         except KeyError,e1:
                             pass
                         line = snv_file.readline()
-                        line_cnt += 1
                     print "end %s" % file_path
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
@@ -234,7 +234,7 @@ def obtain_promoter_and_genebody_mutation_status():
                         for gidx, gene_name in enumerate(GENOME):
                             if len(SNP_INS_DEL_dict[iclass][cancer_stage_rep][csid][gene_name].keys()) > 0:
                                 sorted_dict = SNP_INS_DEL_dict[iclass][cancer_stage_rep][csid][gene_name]
-                                sorted_dict = sorted(sorted_dict.items(), key=lambda d: d[0]['rel_start'])
+                                sorted_dict = sorted(sorted_dict.items(), key=lambda d: d[0])
                                 ltw_t = []
                                 if key == "SNP":
                                     for k, v in sorted_dict:
