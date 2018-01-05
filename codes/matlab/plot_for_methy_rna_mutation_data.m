@@ -4,7 +4,7 @@ clear all;
 close all;
 
 gene_idx_filepath = '../../global_files/gene_idx.txt';
-gene_names = extract_gene_idx_and_genename(gene_idx_filepath);
+[gidxs, gene_names] = textread(gene_idx_filepath,'%d\t%s');
 
 target_gene_idxs = load('../../global_files/target_gene_idx.dat');
 size_target_gene = size(target_gene_idxs);

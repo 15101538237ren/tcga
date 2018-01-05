@@ -3,6 +3,9 @@ import os, json, requests
 import numpy as np
 from base import *
 
+is_merge_stage = True
+dname = "merged_stage" if is_merge_stage else "stage"
+stage_list = mutation_merged_stage if is_merge_stage else mutation_stage
 #输入TCGA的submitter_id列表, 和查询大小(最大300), 返回一个[dict], dict的key:value分别为submitter_id : stage_name
 def query_stage_of_an_submitter_id(submitter_ids, query_size):
     cases_endpt = 'https://api.gdc.cancer.gov/cases'
@@ -30,7 +33,7 @@ def query_stage_of_an_submitter_id(submitter_ids, query_size):
     return [submitter_id_to_stage]
 
 #从突变文件(.maf)获取所有癌症各自的submitter_id列表,并将列表写入到output_cancer_dir的cancer_name_submitter_ids.txt文件中, 文件含有两列,第一列为index, 第二列为submitter_id
-def get_maf_submitter_ids(is_merge_stage):
+def get_maf_submitter_ids():
     submitter_dict = {}
     for cancer_name in cancer_names:
         cancer_dir = os.path.join(snv_data_dir, cancer_name)
@@ -64,7 +67,7 @@ def get_maf_submitter_ids(is_merge_stage):
 #1. 读取get_maf_submitter_ids函数产生的*_submitter_ids.txt文件, 从而获得该癌症的所有submitter_id列表;
 #2. 通过query_stage_of_an_submitter_id函数, 查询query_size大小的submitter_id列表对应的癌症阶段列表(stages)
 #3. *_submitter_ids.txt文件中submitter_id列表对应的癌症阶段写到cancer_name_stages.txt中,第一列为idx,对应submitter_ids.txt的idx, 第二列为癌症阶段名称(stage_name)
-def get_submitter_id_stages(is_merge_stage):
+def get_submitter_id_stages():
 
     query_size = 300
     for cancer_name in cancer_names:
@@ -93,10 +96,9 @@ def get_submitter_id_stages(is_merge_stage):
                     for k,v in stages_of_subids_dict[0].items():
                         submitter_id_stage_dict[k] = v
                         stage_and_its_submitter_dict[v].append(k)
-            out_stage_list = mutation_merged_stage if is_merge_stage else mutation_stage
-            for stage in out_stage_list:
+            for stage in stage_list:
                 if len(stage_and_its_submitter_dict[stage]):
-                    output_stage_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage +"_submitter_ids.txt")
+                    output_stage_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage.replace(" ", "_") +"_submitter_ids.txt")
                     write_tab_seperated_file_for_a_list(output_stage_path,stage_and_its_submitter_dict[stage], index_included=True)
 
             for submitter_id in submitter_ids:
@@ -136,16 +138,15 @@ def input_submitter_id_and_its_stages(input_cancer_dir, cancer_name):
 # 运行生成突变数据的流水线: 首先生成gene_id文件,方便对数据文件的gene_id索引
 # 从.maf突变数据中,统计会产生编码区mRNA突变或者翻译后氨基酸改变的基因突变数量
 # 输出各个癌症阶段对应的基因突变数据, cancer_name_stage_mutation_count.dat, 第一列为gene_index, 第一行为submitter_id的index(对应见cancer_name_submitter_ids.txt文件), 内容为某基因在某样本中影响翻译的基因突变数量
-def dna_mutation_data_transform_pipline(is_merge_stage):
+def dna_mutation_data_transform_pipline():
     colum_idxs = [0, 8, 15] #要提取maf文件的列编号
     mutation_expections = ["Missense_Mutation", "Translation_Start_Site", "Splice_Region", "Splice_Site", "In_Frame_Del", "In_Frame_Ins", "Frame_Shift_Del", "Frame_Shift_Ins"]
-    stage_list = merged_stage if is_merge_stage else tumor_stages
     for cancer_name in cancer_names:
-        cancer_dir = os.path.join(snv_data_dir, dname, cancer_name)
+        cancer_dir = os.path.join(snv_data_dir, cancer_name)
         #只对有突变数据的癌症做分析
         if os.path.exists(cancer_dir):
             data_dict = {}
-            output_cancer_dir = os.path.join(snv_intermidiate_dir, cancer_name)
+            output_cancer_dir = os.path.join(snv_intermidiate_dir, dname, cancer_name)
             if os.path.exists(output_cancer_dir):
                 [submitter_id_to_stage_dict, submitter_ids] = input_submitter_id_and_its_stages(output_cancer_dir, cancer_name)
 
@@ -173,10 +174,10 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
                             line = snv_file.readline()
                         print "end %s" % file_path
 
-                for cancer_stage in mutation_merged_stage:
-                    stage_submitter_ids_path = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage +"_submitter_ids.txt")
+                for cancer_stage in stage_list:
+                    stage_submitter_ids_path = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage.replace(" ", "_") +"_submitter_ids.txt")
                     stage_submitter_ids = read_tab_seperated_file_and_get_target_column(1, stage_submitter_ids_path)
-                    mut_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_data.dat")
+                    mut_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage.replace(" ", "_") + "_mutation_data.dat")
                     with open(mut_data_filepath,"w") as data_file:
                         data_str = []
                         header = "\t".join([str(item) for item in range(len(stage_submitter_ids) + 1)])
@@ -187,14 +188,34 @@ def dna_mutation_data_transform_pipline(is_merge_stage):
                             data_str.append("\t".join([str(item) for item in arr]))
                         data_file.write("\n".join(data_str))
 
+def print_mutation_samplesize_of_each_cancer(sample_count_filepath):
+    ltws = []
+    header_arr = ["cancer"]
+    header_arr.extend(stage_list)
+    header_arr.extend(["total"])
+    ltws.append("\t".join(header_arr))
+
+    for cancer_name in cancer_names:
+        output_cancer_dir = os.path.join(snv_intermidiate_dir, dname, cancer_name)
+        arr = [cancer_name]
+        tot = 0
+        for cancer_stage in stage_list:
+            stage_submitter_ids_path = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage.replace(" ", "_") +"_submitter_ids.txt")
+            stage_submitter_ids = read_tab_seperated_file_and_get_target_column(1, stage_submitter_ids_path)
+            stage_cnt = len(stage_submitter_ids)
+            tot += stage_cnt
+            arr.append(str(stage_cnt))
+        arr.append(str(tot))
+        ltws.append("\t".join(arr))
+    with open(sample_count_filepath, "w") as sample_count_file:
+        sample_count_file.write("\n".join(ltws))
 def calc_mutation_rate():
-    temp_stages = mutation_merged_stage[0 : -1]
-    for cancer_stage in temp_stages:
+    for cancer_stage in stage_list:
         for cancer_name in cancer_names:
-            output_cancer_dir = os.path.join(snv_intermidiate_dir, "merged_stage", cancer_name)
-            mutation_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_data.dat")
-            out_mutation_rate_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate.txt")
-            out_mutation_rate_sorted_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage + "_mutation_rate_sorted.txt")
+            output_cancer_dir = os.path.join(snv_intermidiate_dir, dname, cancer_name)
+            mutation_data_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage.replace(" ", "_") + "_mutation_data.dat")
+            out_mutation_rate_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage.replace(" ", "_") + "_mutation_rate.txt")
+            out_mutation_rate_sorted_filepath = os.path.join(output_cancer_dir, cancer_name + "_" + cancer_stage.replace(" ", "_") + "_mutation_rate_sorted.txt")
             ltws = []
             mut_dict = {}
             with open(mutation_data_filepath,"r") as data_file:
@@ -220,10 +241,9 @@ def calc_mutation_rate():
                 for (k, v) in sorted_dict:
                     ltws.append("\t".join([str(k), str(v)]))
                 mutation_rate_sorted_file.write("\n".join(ltws))
-            print "finish %s" % cancer_name
+            print "finish %s %s " % (cancer_name, cancer_stage)
 
-is_merge_stage = False
-dname = "merged_stage" if is_merge_stage else "stage"
+
 for cancer_name in cancer_names:
     output_cancer_dir = os.path.join(snv_intermidiate_dir, dname, cancer_name)
     if not os.path.exists(output_cancer_dir):
@@ -231,17 +251,17 @@ for cancer_name in cancer_names:
     submitter_id_input_filepath = os.path.join(output_cancer_dir, cancer_name + "_submitter_ids.txt")
     first_called = False
     if not os.path.exists(submitter_id_input_filepath):
-        get_maf_submitter_ids(is_merge_stage)
+        get_maf_submitter_ids()
         first_called = True
     stages_input_filepath = os.path.join(output_cancer_dir, cancer_name + "_stages.txt")
     if not os.path.exists(stages_input_filepath):
-        get_submitter_id_stages(is_merge_stage)
+        get_submitter_id_stages()
         first_called = True
     if first_called:
         break
 
 if __name__ == '__main__':
-    # dna_mutation_data_transform_pipline(is_merge_stage)
+    dna_mutation_data_transform_pipline()
     calc_mutation_rate()
     #
     pass

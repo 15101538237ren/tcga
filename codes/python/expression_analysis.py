@@ -4,7 +4,7 @@ import numpy as np
 from base import *
 fpkm_file_end = ".FPKM.txt"
 
-is_merge_stage = False
+is_merge_stage = True
 dname = "merged_stage" if is_merge_stage else "stage"
 # 获得每种癌症的htseq-count数据的文件名列表
 def obtain_fpkm_filelist():
@@ -161,7 +161,7 @@ def compute_tpm_for_a_fpkm_file(fpkm_file_path):
             line = input_file.readline()
     sum_of_fpkm = float(np.array(fpkm_dict.values()).sum())
     tpm_dict = {ensemble_id: (fpkm_value / sum_of_fpkm) * 1000000.0 for (ensemble_id, fpkm_value) in fpkm_dict.items()}
-    return [fpkm_dict, tpm_dict]
+    return [fpkm_dict, tpm_dict, sum_of_fpkm]
 
 #some global variables
 
@@ -187,9 +187,10 @@ if not os.path.exists(emsembl_ids_filepath):
 
 def generate_tpm_table_for_each_cancer_and_each_stage():
     gene_idxs = np.array([item for item in range(len(GENOME) + 1)])
-    stage_list = merged_stage if is_merge_stage else tumor_stages
+    stage_list = merged_stage if is_merge_stage else methy_and_rna_stages
     gene_idx_ensembl_names = read_tab_seperated_file_and_get_target_column(1,emsembl_ids_filepath)
     for cancer_name in cancer_names:
+        cancer_fpkm_std = []
         cancer_data_dir = os.path.join(rna_data_dir, cancer_name)
         output_cancer_dir = os.path.join(rna_intermidiate_dir, dname, cancer_name)
         fpkm_filelist_path = os.path.join(output_cancer_dir, cancer_name + "_fpkm_filelist.txt")
@@ -217,7 +218,8 @@ def generate_tpm_table_for_each_cancer_and_each_stage():
                 fpkm_matrix = [gene_idxs]
                 for fidx ,fpkm_case_id in enumerate(fpkm_case_id_list):
                     fpkm_filepath = os.path.join(cancer_data_dir, fpkm_case_id + fpkm_file_end)
-                    [fpkm_values_dict, tpm_values_dict] = compute_tpm_for_a_fpkm_file(fpkm_filepath)
+                    [fpkm_values_dict, tpm_values_dict,sum_of_fpkm] = compute_tpm_for_a_fpkm_file(fpkm_filepath)
+                    cancer_fpkm_std.append(sum_of_fpkm)
                     filtered_tpm_values = [fidx + 1]
                     filtered_fpkm_values = [fidx + 1]
 
@@ -237,6 +239,8 @@ def generate_tpm_table_for_each_cancer_and_each_stage():
                 np.savetxt(out_stage_tpm_data_path, tpm_matrix, delimiter="\t")
                 np.savetxt(out_stage_fpkm_data_path, fpkm_matrix, delimiter="\t")
                 print "save %s stage tpm data successful!" % stage
+        arr_fpkm_sum = np.array(cancer_fpkm_std)
+        print "%s fpkm sum mean %.4f\tstd %.4f" % (cancer_name, arr_fpkm_sum.mean(), arr_fpkm_sum.std())
 if __name__ == '__main__':
     generate_tpm_table_for_each_cancer_and_each_stage()
     pass

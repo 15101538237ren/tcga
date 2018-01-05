@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 from base import *
-methy_manifest_path = os.path.join(global_files_dir, "methy_24_cancer_manifest.tsv")
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
 tumor_suppressed_gene_filepath = os.path.join(global_files_dir, "gene_with_protein_product.tsv")
 
@@ -14,47 +14,8 @@ tumor_stages_xaxis2 = {}
 for idx, item in enumerate(merged_stage):
     tumor_stages_xaxis2[item] = idx + 1
 is_merge_stage = True
-stage_list = merged_stage if is_merge_stage else tumor_stages
+stage_list = methy_and_rna_merged_stages if is_merge_stage else methy_and_rna_stages
 dname = "merged_stage" if is_merge_stage else "stage"
-# 通过manifest文件中的对应关系,将下载的文件名filename和uuid对应起来,方便互相查询(uuid->filename, filename->uuid)
-def connect_filename_to_uuid():
-    uuid_to_filename = {}
-    filename_to_uuid = {}
-    now_file = open(methy_manifest_path,'r')
-
-    #pass the header
-    now_file.readline()
-
-    str_pattern = r'([^\t]+)\t([^\t]+)'
-    cancer_pattern = r'jhu-usc.edu_([^\.]+)*'
-    uuid_dict = {cancer_name:[] for cancer_name in cancer_names}
-    file_name_dict={cancer_name:[] for cancer_name in cancer_names}
-
-    line = now_file.readline()
-    while line:
-        match_p = re.search(str_pattern, line)
-        if match_p:
-            uuid = match_p.group(1)
-            file_name = match_p.group(2)
-
-            uuid_to_filename[uuid] = file_name
-            filename_to_uuid[file_name] = uuid
-            try:
-                cancer_name = re.search(cancer_pattern, file_name).group(1)
-                if cancer_name in cancer_names:
-                    uuid_dict[cancer_name].append(uuid)
-                    file_name_dict[cancer_name].append(file_name)
-            except AttributeError:
-                print file_name
-            # print "%s\t%s" % (uuid, file_name)
-
-        line=now_file.readline()
-    now_file.close()
-    print "connect_filename_to_uuid called"
-    return [uuid_to_filename, filename_to_uuid, uuid_dict, file_name_dict]
-
-#returned global vars from connect_filename_to_uuid()
-[uuid_to_filename, filename_to_uuid, uuid_dict, file_name_dict] = connect_filename_to_uuid()
 
 #通过json文件, 获取每个uuid对应的一级癌症阶段merged_tumor_stage和二级癌症阶段tumor_stage
 def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):
@@ -135,7 +96,7 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
                     beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
                     gene_types = line_contents[6].split(";")
                     for idx, gene_symbol in enumerate(gene_symbols):
-                        if gene_symbol != "." and (-2000 <= int(positions_to_tss[idx]) <= 0) and beta_val > 0.0:
+                        if gene_symbol != "." and (-promoter_length <= int(positions_to_tss[idx]) <= 0) and beta_val > 0.0:
                             if not whole_genes:
                                 if (gene_symbol in GENOME):
                                     temp_gene_methy_dict[gene_symbol].append(beta_val)
@@ -260,11 +221,13 @@ def save_data_to_file(arr, path, precision = 4):
     file_out.close()
 
 #保存cancer_name癌症,out_stage_list中阶段的DNA甲基化数据
-def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_data = False,out_xy=False, out_all_stage=False):
-    if not os.path.exists(methy_intermidiate_dir):
-        os.makedirs(methy_intermidiate_dir)
+def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_data = False,out_xy=False, out_all_stage=False, target_gene_name=None):
     profile = profile_list[0]
-    for gene in GENOME:
+    target_gene_list =[target_gene_name] if target_gene_name else GENOME
+    out_methy_cancer_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+    if not os.path.exists(out_methy_cancer_dir):
+        os.makedirs(out_methy_cancer_dir)
+    for gene in target_gene_list:
         if gene in profile.keys():
             gene_data = profile[gene]
             merged_data = []
@@ -285,10 +248,10 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
                     stage_data = gene_data[idx]
                     merged_data.extend(stage_data)
                     if out_stage_data:
-                        save_data_to_file(stage_data, methy_intermidiate_dir + os.sep + gene + "_" + merged_stage[idx] + "_" + cancer_name + ".dat")
+                        save_data_to_file(stage_data, out_methy_cancer_dir + os.sep + gene + "_" + merged_stage[idx] + "_" + cancer_name + ".dat")
             if out_xy:
-                out_xy_path = methy_intermidiate_dir + os.sep + gene + "_xy_" + cancer_name + ".dat"
-                out_y_label_path = methy_intermidiate_dir + os.sep + gene + "_y_label_" + cancer_name + ".dat"
+                out_xy_path = out_methy_cancer_dir + os.sep + gene + "_xy_" + cancer_name + ".dat"
+                out_y_label_path = out_methy_cancer_dir + os.sep + gene + "_y_label_" + cancer_name + ".dat"
                 out_xy_file = open(out_xy_path, "w")
                 out_y_label_file = open(out_y_label_path, "w")
                 out_xy_file.write("\n".join(ltws_xy))
@@ -296,7 +259,7 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
                 out_xy_file.close()
                 out_y_label_file.close()
             if out_all_stage:
-                save_data_to_file(merged_data,  methy_intermidiate_dir + os.sep + gene + "_" + "all_stage" + "_" + cancer_name + ".dat")
+                save_data_to_file(merged_data,  out_methy_cancer_dir + os.sep + gene + "_" + "all_stage" + "_" + cancer_name + ".dat")
     print "save methy data successfully!"
 
 #将某癌症数据写入到tsv文件中
@@ -305,13 +268,14 @@ def dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_list
 
     for stage_idx, stage_name in enumerate(stage_list):
         stage_values_length = len(profile['APC'][stage_idx])
+        stage_name_rep = stage_name.replace(" ", "_")
         output_cancer_dir = outdir
         if not os.path.exists(output_cancer_dir):
             os.makedirs(output_cancer_dir)
-        if stage_name != "not reported" and stage_name in profile_uuid.keys() and len(profile_uuid[stage_name]):
-            out_uuid_id_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage_name + "_uuids.txt")
+        if stage_name in profile_uuid.keys() and len(profile_uuid[stage_name]):
+            out_uuid_id_path = os.path.join(output_cancer_dir, cancer_name + "_" + stage_name_rep + "_uuids.txt")
             write_tab_seperated_file_for_a_list(out_uuid_id_path, profile_uuid[stage_name],index_included=True)
-            outfile_path =  os.path.join(output_cancer_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
+            outfile_path =  os.path.join(output_cancer_dir, cancer_name + "_" + stage_name_rep + "_methy_dat.dat")
             outfile = open(outfile_path, "w")
             out_str = []
             header = "\t".join([ str(item) for item in range(len(profile_uuid[stage_name]) + 1)])
@@ -356,7 +320,7 @@ def print_samplesize_of_each_cancer(sample_count_filepath):
         arr.append(str(tot))
         ltws.append("\t".join(arr))
 
-    with open(sample_count_filepath,"w") as sample_count_file:
+    with open(sample_count_filepath, "w") as sample_count_file:
         sample_count_file.write("\n".join(ltws))
 
 def calc_cancer_means_and_stds_for_genome(cancer_name, cancer_profile_arr, stage_list, cancer_mean_std_dir):
@@ -423,36 +387,10 @@ def dump_data_into_dat_pipepile():
             os.makedirs(out_dir)
         dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
-
-def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir):
-    for stage_idx, stage_name in enumerate(stage_list):
-        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
-        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
-
-#根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
-def dump_entropy_into_dat_pipeline():
-    for cancer_name in cancer_names:
-        if cancer_name == "COAD":
-            print "now start %s" % cancer_name
-            in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
-            out_dir = os.path.join(methy_entropy_dir, dname, cancer_name)
-
-            input_dat_fp = os.path.join(in_dir, cancer_name + "_" + "i" + "_methy_dat.dat")
-            methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
-            A = methy_dat.values
-            cnt = 0
-            for eidx, ele in enumerate(A):
-                if any(e < 0 for e in ele):
-                    cnt += 1
-                    print eidx + 1
-            print cnt
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir)
-
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
+    target_gene_name = "EYA4"
     for cancer_name in cancer_names:
         if cancer_name == "COAD":
             print "now start %s" % cancer_name
@@ -460,7 +398,7 @@ def save_gene_methy_data_pipeline():
             pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
             temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
             new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-            save_gene_methy_data(cancer_name, new_profile_list, out_stage_list,out_stage_data=False, out_xy=False, out_all_stage=True)
+            save_gene_methy_data(cancer_name, new_profile_list, out_stage_list, out_stage_data=False, out_xy=False, out_all_stage=True, target_gene_name=target_gene_name)
 
 #只进行DNA甲基化数据缓存
 def just_calc_methylation_pickle_pipeline():
@@ -470,10 +408,96 @@ def just_calc_methylation_pickle_pipeline():
         pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
         gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=False, whole_genes= True)
 
+def dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins):
+    out_entropy_dat_fp = os.path.join(out_dir, cancer_name + "_entropy.dat")
+    entropy_matrix = [[item for item in range(len(stage_list) + 1)]]
+    for gene_idx, gene in enumerate(GENOME):
+        default_entropy_values = [gene_idx + 1]
+        default_entropy_values.extend([-1 for item in stage_list])
+        entropy_matrix.append(default_entropy_values)
+
+    for stage_idx, stage_name in enumerate(stage_list):
+        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
+        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+        methy_matrix = methy_dat.values
+
+        stage_sample_counts = len(methy_matrix[0])
+        for gene_idx, methy_values_of_gene_i in enumerate(methy_matrix):
+            #若beta_value矩阵的gene_idx行中没有-1的元素,才计算该基因的信息熵
+            if not any(methy_value < 0 for methy_value in methy_values_of_gene_i):
+                hist, bin_edges = np.histogram(methy_values_of_gene_i, bins=bins)
+                freqencies = hist / float(stage_sample_counts)
+                positive_frequencies = [freq for freq in freqencies if freq > 10e-6]
+                entropy_of_this_gene = 0.0
+                for fidx, freq in enumerate(positive_frequencies):
+                    entropy_of_this_gene += -1.0 * freq * math.log(freq)
+                # print entropy_of_this_gene
+                entropy_matrix[gene_idx + 1][stage_idx + 1] = entropy_of_this_gene
+    np.savetxt(out_entropy_dat_fp, np.array(entropy_matrix), delimiter="\t")
+    print "save %s successful!" % out_entropy_dat_fp
+
+#根据各癌症各阶段的.dat文件(基因的DNA甲基化水平矩阵),计算并生成entropy矩阵
+def dump_entropy_into_dat_pipeline():
+    bins = np.linspace(0.0, 1.0, num=51)
+    out_dir = os.path.join(methy_entropy_dir, dname)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    stages_fp = os.path.join(methy_entropy_dir, dname, "stage_idx.txt")
+    write_tab_seperated_file_for_a_list(stages_fp,stage_list, index_included=True)
+    for cancer_name in cancer_names:
+        print "now start %s" % cancer_name
+        in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        dump_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, bins)
+def calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir , stage_wanted, middle_name):
+    input_dat_fp = os.path.join(methy_in_dir, cancer_name + "_" + stage_wanted + "_methy_dat.dat")
+    gidx_fp_path = os.path.join(gidx_in_dir, cancer_name + "_" + stage_wanted + "_" + middle_name + "_gidx.txt")
+    gidxs =[int(gidx) for gidx in read_tab_seperated_file_and_get_target_column(1, gidx_fp_path)]
+    len_gidx = len(gidxs)
+    out_corr_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_wanted + "_" + middle_name + "_corr.dat")
+    methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+    methy_matrix = methy_dat.values
+    corr_matrix = np.ones((len_gidx + 1, len_gidx + 1)) * (-10)
+    corr_matrix[0][0] = 0
+    for mi in range(len_gidx):
+        corr_matrix[mi + 1][0] = mi + 1
+        corr_matrix[0][mi + 1] = mi + 1
+
+        for mj in range(len_gidx):
+            if mi == mj:
+                corr_matrix[mi + 1][mj + 1] = 1.0
+            elif mj < mi:
+                i_arr = methy_matrix[gidxs[mi] - 1]
+                if any(methy_value < 0 for methy_value in i_arr):
+                    continue
+
+                j_arr = methy_matrix[gidxs[mj] - 1]
+                if (mi != mj) and any(methy_value < 0 for methy_value in j_arr):
+                    continue
+                corr_val = np.corrcoef(i_arr, j_arr)[0, 1]
+                corr_matrix[mi + 1][mj + 1] = corr_val
+                corr_matrix[mj + 1][mi + 1] = corr_val
+        print mi
+    np.savetxt(out_corr_dat_fp, corr_matrix, delimiter="\t")
+    print "save %s successful!" % out_corr_dat_fp
+
+def calc_methy_correlation_pipeline():
+    cancer_name = "COAD"
+    middle_name_list = ["pp","pn"]
+    for middle_name in middle_name_list:
+        out_dir = os.path.join(methy_corr_dir, dname, cancer_name)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        stage_wanted = "i"
+        print "now start %s" % cancer_name
+        methy_in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        gidx_in_dir = out_dir
+        calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir, stage_wanted, middle_name)
+
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    dump_entropy_into_dat_pipeline()
+    # dump_entropy_into_dat_pipeline()
+    calc_methy_correlation_pipeline()
     pass

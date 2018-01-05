@@ -1,7 +1,8 @@
+#install.packages(c("hash","fitdistrplus","dplyr"))
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-setwd("/disk/tcga/")
+setwd("/disk/tcga/") # ~/PycharmProjects/tcga
 base_dir <- getwd()
 gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
 gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 
@@ -30,8 +31,8 @@ df_idx = 5 # df_col_index_start_of_data
 
 if(!file.exists(output_data_dir))
 {
-  dir.create(output_data_dir)
-  print(sprintf("create %s successful!\n", output_data_dir))
+  dir.create(output_data_dir,recursive = T)
+  print(sprintf("create %s successful!", output_data_dir))
 }
 
 stage_name_list = c("normal", "i")
@@ -110,7 +111,7 @@ maefun <- function(pred, obs)
 for(item in dir(methy_data_dir))
 {
   cancer_name = item
-  print(sprintf("start %s\n",cancer_name))
+  print(sprintf("start %s", cancer_name))
   if(get_cancer_idx(cancer_name) == -1)
     next
   
@@ -151,15 +152,11 @@ for(item in dir(methy_data_dir))
       origin_normal_methy = as.numeric(normal_methy_frame)
       origin_i_th_methy = as.numeric(i_th_methy_frame)
       
-      #cat("i = ", i, "!\n")
-      #print(normal_methy)
-      #print(i_th_methy)
       if(sum(is.na(origin_normal_methy)) > 0 || sum(is.na(origin_i_th_methy)) > 0)
       {
         next
       }
       
-      # all -1(all data are NA)
       if(checkValue(origin_normal_methy, normal_sample_num) || checkValue(origin_i_th_methy, i_th_sample_num) 
          || checkValue(origin_normal_methy, normal_sample_num - 1))
       {
@@ -236,7 +233,7 @@ for(item in dir(methy_data_dir))
       
       if(i %% 100 == 0)
       {
-        cat("i = ", i, "is finished\n")
+        cat(i,"/", data_frame_len,":", i/data_frame_len," is finished!\n")
       }
     }
     
@@ -244,7 +241,7 @@ for(item in dir(methy_data_dir))
     
     if(!file.exists(cancer_dir_path))
     {
-        dir.create(cancer_dir_path)
+        dir.create(cancer_dir_path,recursive = T)
     }
     
     #---------------------------------------------
@@ -261,12 +258,10 @@ for(item in dir(methy_data_dir))
     #
     score_file_positive_file_name =  sprintf("%s/%s%s", cancer_dir_path, cancer_name,score_file_positive_name_end)
     cancer_df_pp_scores = cancer_df_mp_score[c(1:df_idx-1)]
-    names(cancer_df_pp_scores) = seq(0, i_th_sample_num)
-    write.table(cancer_df_pp_scores, file=score_file_positive_file_name, sep = "\t", row.names=F, quote=F)
+    write.table(cancer_df_pp_scores, file=score_file_positive_file_name, sep = "\t", row.names=F, col.names=F, quote=F)
     
     score_file_negtive_file_name =  sprintf("%s/%s%s", cancer_dir_path, cancer_name,score_file_negtive_name_end)
     cancer_df_pn_scores = cancer_df_mn_score[c(1:df_idx-1)]
-    names(cancer_df_pn_scores) = seq(0, i_th_sample_num)
-    write.table(cancer_df_pn_scores, file=score_file_negtive_file_name, sep = "\t", row.names=F, quote=F)
+    write.table(cancer_df_pn_scores, file=score_file_negtive_file_name, sep = "\t", row.names=F, col.names=F, quote=F)
   }
 }
