@@ -10,7 +10,7 @@ global_files_dir = os.path.join(base_dir, "global_files")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir = "/disk/tcga_raw_data" #/Users/Ren/PycharmProjects/tcga_raw_data
+raw_data_dir = "/Users/Ren/PycharmProjects/tcga_raw_data"#/disk/tcga_raw_data"
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
@@ -269,6 +269,13 @@ def generate_gene_index(gene_idx_fp, gene_label_fp):
             ltws.append(ltw)
         gene_label_file.write("\n".join(ltws))
     print "generate_gene_index successful at %s" % gene_idx_fp
+
+
+
+with open(os.path.join(global_files_dir, "mutation_classification.txt"),"w") as mutation_classification_file:
+    sorted_dict = sorted(mutation_classification.items(), key=lambda d: d[1])
+    for k,v in sorted_dict:
+        mutation_classification_file.write(str(v) + "\t" + k + "\n")
 
 #some global variables
 gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
