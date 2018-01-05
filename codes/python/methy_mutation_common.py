@@ -146,6 +146,7 @@ def obtain_promoter_and_genebody_methy_status():
                 tot_time += t_used_time
                 remain_time = (tot_time / (sidx + 1.0)) * (len(common_submitter_ids) - sidx - 1.0)
                 print "%d of %d, %.2f%%, Total Time: %.2f, Time Left: %.2f" % (sidx + 1, len(common_submitter_ids), (sidx + 1.0)/len(common_submitter_ids), tot_time, remain_time)
+
 def obtain_promoter_and_genebody_mutation_status():
     gene_infos = {}
     for gidx, gene_name in enumerate(GENOME):
@@ -217,18 +218,21 @@ def obtain_promoter_and_genebody_mutation_status():
                                         v_context = line_contents[111]
                                         if (- promoter_length < pttss < 0) or (g_start <= v_start <= g_end):
                                             SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
-                                                submitter_id][gname][pttss] = {'rel_start':pttss, 'class':mutation_classification[variant_class],
-                                                                        'context':v_context, 'change': change}
+                                                submitter_id][gname][pttss] = {'rel_start':pttss, 'v_start':v_start,
+                                                                               'class_code': mutation_classification[variant_class],
+                                                                               'class':variant_class, 'context':v_context, 'change': change}
                                     else:
                                         p_start = g_start - promoter_length if g_strand else g_start
                                         p_end = g_end if g_strand else g_end + promoter_length
-                                        reference_allele = line_contents[10]
+                                        reference_allele = line_contents[10] if variant_type == "DEL" else line_contents[12]
                                         if (p_start <= v_start) and (v_end <= p_end):
                                             s_to_tss = v_start - g_start if g_strand else g_end - v_start
                                             e_to_tss = v_end - g_start if g_strand else g_end - v_end
                                             SNP_INS_DEL_dict[SNP_Ins_Del_classification[variant_type]][s_stage][
-                                                submitter_id][gname][s_to_tss] = {'rel_start': s_to_tss, 'rel_end':e_to_tss,
-                                                                        'class': mutation_classification[variant_class], 'change': reference_allele}
+                                                submitter_id][gname][s_to_tss] = {'rel_start': s_to_tss, 'v_start':v_start,
+                                                                                  'rel_end' : e_to_tss, 'v_end' : v_end,
+                                                                                   'class_code': mutation_classification[variant_class],
+                                                                                  'class': variant_class, 'change': reference_allele}
                         except KeyError,e1:
                             pass
                         line = snv_file.readline()
@@ -238,6 +242,7 @@ def obtain_promoter_and_genebody_mutation_status():
             out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
             out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
+
             for sidx, csid in enumerate(common_submitter_ids):
 
                 for key, iclass in SNP_Ins_Del_classification.items():
@@ -251,17 +256,15 @@ def obtain_promoter_and_genebody_mutation_status():
                                 ltw_t = []
                                 if key == "SNP":
                                     for k, v in sorted_dict:
-                                        ltw_temp = ",".join([str(v['rel_start']),str(v['class']),v['change'],v['context']])
+                                        ltw_temp = ",".join([str(v['rel_start']),str(v['v_start']), str(v['class_code']), str(v['class']),v['change'],v['context']])
                                         ltw_t.append(ltw_temp)
                                 else:
                                     for k, v in sorted_dict:
-                                        ltw_temp = ",".join([str(v['rel_start']),str(v['rel_end']), str(v['class']), v['change']])
+                                        ltw_temp = ",".join([str(v['rel_start']),str(v['rel_end']),str(v['v_start']),str(v['v_end']), str(v['class_code']) , str(v['class']), v['change']])
                                         ltw_t.append(ltw_temp)
-                                ltw = str(gidx + 1) + "\t" + ";".join(ltw_t)
-                            else:
-                                ltw = str(gidx + 1)
-                            ltws.append(ltw)
-                            out_mut_file.write("\n".join(ltws))
+                                ltw = str(gidx + 1) + "\t" + gene_name +"\t" + ";".join(ltw_t)
+                                ltws.append(ltw)
+                        out_mut_file.write("\n".join(ltws))
                         print "write %s successful" % out_mut_fp
 
         t1 = time.time()
@@ -269,6 +272,7 @@ def obtain_promoter_and_genebody_mutation_status():
         tot_time += t_used_time
         remain_time = (tot_time / (cid + 1.0)) * (len(cancer_names) - cid - 1.0)
         print "%d of %d, %.2f, Total Time: %.2f, Time Left: %.2f" % (cid + 1, len(cancer_names), (cid + 1.0) / len(cancer_names), tot_time, remain_time)
+
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
@@ -333,7 +337,8 @@ def compute_common_mutation_or_methy_variation_samples():
                 out_common_pval_fp = os.path.join(out_dir, "common_methy_sig_variation_samples_cnt.dat")
                 np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
                 print "save %s successful!" % out_common_pval_fp
+
 if __name__ == '__main__':
-    extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
-    # obtain_promoter_and_genebody_mutation_status()
+    # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
