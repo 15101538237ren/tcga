@@ -58,12 +58,12 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
 
                 mut_idxs = [mutation_idx_dict[csid] for csid in common_submitter_ids]
 
-                write_tab_seperated_file_for_a_list(os.path.join(out_idx_dir, 'common_patients_mutation_ids.txt'), mut_idxs, index_included=True)
+                write_tab_seperated_file_for_a_list(os.path.join(out_idx_dir, 'common_patients_mutation_idxs.txt'), mut_idxs, index_included=True)
                 methy_idxs = [methy_idx_dict[methy_file_name_dict[csid]] for csid in common_submitter_ids]
 
                 write_tab_seperated_file_for_a_list(os.path.join(out_idx_dir, 'common_patients_methy_idxs.txt'), methy_idxs, index_included=True)
 
-                out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+                out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idxs.txt')
                 with open(out_idx_fp, "w") as out_idx_file:
                     tltws = []
                     for common_idx in range(len(common_submitter_ids)):
@@ -339,6 +339,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 print "save %s successful!" % out_common_pval_fp
 
 if __name__ == '__main__':
-    # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
