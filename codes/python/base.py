@@ -10,7 +10,7 @@ global_files_dir = os.path.join(base_dir, "global_files")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir = "/Users/Ren/PycharmProjects/tcga_raw_data" #
+raw_data_dir = "/disk/tcga_raw_data" #/Users/Ren/PycharmProjects/tcga_raw_data
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
