@@ -25,6 +25,7 @@ def query_submitter_id_of_a_uuid(uuids):
 
 def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
     ltws = ["\t".join(['cancer', '#methy (cases)', '#mutation', '#total common', '#i', '#ii', '#iii', '#iv'])]
+
     for cancer_name in cancer_names:
         methy_tot = 0
         mut_tot = 0
@@ -37,18 +38,30 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
                 os.makedirs(out_idx_dir)
             mutation_submitter_ids_fp = os.path.join(snv_intermidiate_dir, dname, cancer_name, cancer_name + "_" + cancer_stage_rep + "_submitter_ids.txt")
             mutation_submitter_ids = read_tab_seperated_file_and_get_target_column(1, mutation_submitter_ids_fp)
+            mutation_idx_dict = {mitem: (midx + 1) for midx, mitem in enumerate(mutation_submitter_ids)}
             mut_tot += len(mutation_submitter_ids)
 
             methy_uuids_fp = os.path.join(methy_intermidiate_dir, dname, cancer_name, cancer_name + "_" + cancer_stage_rep + "_uuids.txt")
             methy_uuids = read_tab_seperated_file_and_get_target_column(1, methy_uuids_fp)
+
             methy_submitter_ids = query_submitter_id_of_a_uuid(methy_uuids)
             methy_file_name_dict = {submitter_id : uuid_to_filename[methy_uuids[sidx]]  for sidx, submitter_id in enumerate(methy_submitter_ids)}
+
+            methy_idx_dict = {uuid_to_filename[methy_item]: (methy_idx + 1) for methy_idx, methy_item in enumerate(methy_uuids)}
+
             methy_tot += len(methy_uuids)
             if len(methy_uuids) == len(methy_submitter_ids):
                 common_submitter_ids = list(set(methy_submitter_ids).intersection(set(mutation_submitter_ids)))
                 common_tot += len(common_submitter_ids)
                 common_methy_file_names = [methy_file_name_dict[item] for item in common_submitter_ids]
                 ltw_of_stage_common.append(str(len(common_submitter_ids)))
+
+                mut_idxs = [mutation_idx_dict[csid] for csid in common_submitter_ids]
+
+                write_tab_seperated_file_for_a_list(os.path.join(out_idx_dir, 'common_patients_mutation_ids.txt'), mut_idxs, index_included=True)
+                methy_idxs = [methy_idx_dict[methy_file_name_dict[csid]] for csid in common_submitter_ids]
+
+                write_tab_seperated_file_for_a_list(os.path.join(out_idx_dir, 'common_patients_methy_idxs.txt'), methy_idxs, index_included=True)
 
                 out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
                 with open(out_idx_fp, "w") as out_idx_file:
@@ -321,6 +334,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 np.savetxt(out_common_pval_fp, common_methy_variation_samples_matrix, delimiter="\t")
                 print "save %s successful!" % out_common_pval_fp
 if __name__ == '__main__':
-    # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
-    obtain_promoter_and_genebody_mutation_status()
+    extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
+    # obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
