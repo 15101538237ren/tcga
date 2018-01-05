@@ -9,7 +9,7 @@ dname = "merged_stage" if is_merge_stage else "stage"
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
 methy_metadata_json_obj = json.load(open(methy_metadata_path, 'r'))
 common_cases_path = os.path.join(global_files_dir, "common_cases_of_methy_and_mutation.txt")
-
+common_patient_file_name = 'common_patients_idxs.txt'
 #输入TCGA的uuids列表, 和查询大小(最大300), 返回一个list,为对应uuids的submitter_ids
 def query_submitter_id_of_a_uuid(uuids):
     submitter_ids = []
@@ -63,7 +63,7 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
 
                 write_tab_seperated_file_for_a_list(os.path.join(out_idx_dir, 'common_patients_methy_idxs.txt'), methy_idxs, index_included=True)
 
-                out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idxs.txt')
+                out_idx_fp = os.path.join(out_idx_dir, common_patient_file_name)
                 with open(out_idx_fp, "w") as out_idx_file:
                     tltws = []
                     for common_idx in range(len(common_submitter_ids)):
@@ -92,7 +92,7 @@ def obtain_promoter_and_genebody_methy_status():
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
             out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
-            out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+            out_idx_fp = os.path.join(out_idx_dir, common_patient_file_name)
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
             common_filenames = read_tab_seperated_file_and_get_target_column(2, out_idx_fp)
 
@@ -168,7 +168,7 @@ def obtain_promoter_and_genebody_mutation_status():
                 SNP_INS_DEL_dict[iclass][cancer_stage_rep] = {}
 
             out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
-            out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+            out_idx_fp = os.path.join(out_idx_dir, common_patient_file_name)
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
 
             for common_submitter_id in common_submitter_ids:
@@ -240,7 +240,7 @@ def obtain_promoter_and_genebody_mutation_status():
         for cancer_stage in common_stages:
             cancer_stage_rep = cancer_stage.replace(" ", "_")
             out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
-            out_idx_fp = os.path.join(out_idx_dir, 'common_patients_idx.txt')
+            out_idx_fp = os.path.join(out_idx_dir, common_patient_file_name)
             common_submitter_ids = read_tab_seperated_file_and_get_target_column(1, out_idx_fp)
 
             for sidx, csid in enumerate(common_submitter_ids):
