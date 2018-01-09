@@ -4,8 +4,11 @@ clc;
 clear all;
 close all;
 base_path = './';
-mutation_base_dir = '../../data/intermediate_file/snv_intermidiate/merged_stage/';
-pval_base_dir = '../../data/intermediate_file/methy_pvalue/merged_stage/';
+%mutation_base_dir = '../../data/intermediate_file/snv_intermidiate/merged_stage/';
+%pval_base_dir = '../../data/intermediate_file/methy_pvalue/merged_stage/';
+
+mutation_base_dir = 'I:/intermediate_file/snv_intermidiate/merged_stage/';
+pval_base_dir = 'I:/intermediate_file/methy_pvalue/merged_stage/';
 figure_base_dir = '../../figures/mutation_rate_and_mscore/';
 cancer_name='COAD';
 figdir = strcat(figure_base_dir, cancer_name,'/');
@@ -114,7 +117,8 @@ for i = 1: 2
         axis off;
         title(char(gene_type_names(kk)),'FontWeight','normal')
     end
-    exportfig(fig,strcat(figdir, char(fig_names(i)),'.eps'),'color','cmyk');
-    close all;
+    exportfig(fig,strcat(figdir, char(fig_names(i)),'.png'),'color','cmyk');
+    %print(fig,'a.pdf','-dpdf','-opengl');
+    %close all;
 end
 end
