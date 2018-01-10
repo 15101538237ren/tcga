@@ -7,6 +7,7 @@ base_dir = os.path.dirname(os.path.dirname(os.getcwd()))
 #first level dir
 data_dir = os.path.join(base_dir, "data")
 global_files_dir = os.path.join(base_dir, "global_files")
+codes_files_dir = os.path.join(base_dir, "codes")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
@@ -183,6 +184,25 @@ def read_alias_file_and_output_keys_list(input_fp):
             line = input_file.readline().strip("\n")
     return rtn_keys
 
+def match_gene_idx_for_genenames(input_fp, out_gidxs_fp):
+    gnames = read_tab_seperated_file_and_get_target_column(0, input_fp,line_end='\r\n')
+    gidxs = []
+    GENOME_idx_dict = {gname: gidx + 1 for gidx, gname in enumerate(GENOME)}
+    for gidx, gname in enumerate(gnames):
+        try:
+            gsymbol = alias_dict[gname]
+            gidx_corresponding = GENOME_idx_dict[gsymbol]
+        except KeyError,e:
+            gidx_corresponding = -1
+        gidxs.append(gidx_corresponding)
+
+    with open(out_gidxs_fp,'w') as out_gidxs_file:
+        ltws = []
+        for gidx, gname in enumerate(gnames):
+            ltws.append('\t'.join([str(gidx + 1), str(gidxs[gidx]), gname]))
+        out_gidxs_file.write('\n'.join(ltws))
+    print "write %s successful!" % out_gidxs_fp
+
 #input_onco_fp: filepath of onco_gene_file input_tsg_fp: filepath of tumor_suppressed_gene_file, gene_category(0: other, 1: onco, 2: tsg)
 def label_TSG_or_OncoGene(input_onco_fp, input_tsg_fp):
     gene_categorys = [0 for item in GENOME]
@@ -253,6 +273,7 @@ msk_410_labels = label_cgi_genes(msk_410_fp)
 gene_body_fp = os.path.join(global_files_dir, "human_gene_bodys.tsv")
 gene_pos_labels = generate_gene_position_info(gene_body_fp)
 
+
 #生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg 3: onco_and_tsg)
 def generate_gene_index(gene_idx_fp, gene_label_fp):
     with open(gene_idx_fp,"w") as gene_idx_file:
@@ -270,8 +291,6 @@ def generate_gene_index(gene_idx_fp, gene_label_fp):
         gene_label_file.write("\n".join(ltws))
     print "generate_gene_index successful at %s" % gene_idx_fp
 
-
-
 with open(os.path.join(global_files_dir, "mutation_classification.txt"),"w") as mutation_classification_file:
     sorted_dict = sorted(mutation_classification.items(), key=lambda d: d[1])
     for k,v in sorted_dict:
@@ -282,3 +301,7 @@ gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
 gene_label_path = os.path.join(global_files_dir, "gene_label.dat")
 if __name__ == '__main__':
     generate_gene_index(gene_idx_path, gene_label_path)
+    yc_geneset_fp = os.path.join(global_files_dir,'yucheng_candidate_set.txt')
+    out_gidxs_fp = os.path.join(codes_files_dir,'matlab','yucheng_candidate_set.ind')
+    match_gene_idx_for_genenames(yc_geneset_fp,out_gidxs_fp)
+
