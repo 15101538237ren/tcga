@@ -379,9 +379,8 @@ def normal_mean_cpg_methy(target_gene_name, cancer_name):
                             pttss = cpg_start - g_start if g_strand else g_end - cpg_start
                             #要么是启动子，要么在gene body
                             if (- promoter_length < pttss < 0) or (g_start <= cpg_start <= g_end):
-                                pttss_str = str(pttss)
-                                mean_methy_dict.setdefault(pttss_str, [])
-                                mean_methy_dict[pttss_str].append(beta_val)
+                                mean_methy_dict.setdefault(pttss, [])
+                                mean_methy_dict[pttss].append(beta_val)
                                 break
                 except KeyError, e1:
                     pass
@@ -392,11 +391,69 @@ def normal_mean_cpg_methy(target_gene_name, cancer_name):
         ltws = []
         for k, v in sorted_mean_methy:
             mean_methy = np.array(v).mean()
-            ltws.append("\t".join([k, str(mean_methy)]))
+            ltws.append("\t".join([str(k), str(mean_methy)]))
         out_methy_file.write("\n".join(ltws))
         print "write %s successful" % out_mean_methy_fp
+
+#计算启动子区的平均甲基化水平,输出成<病人编号,该基因启动子区平均甲基化水平>的文件
+def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage):
+    gene_infos = {}
+    for gidx, gene_name in enumerate(GENOME):
+        chr_no, start, end, strand = gene_pos_labels[gidx]
+        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
+
+    cancer_stage_rep = cancer_stage.replace(" ", "_")
+
+    out_idx_dir = os.path.join(common_patient_data_dir, cancer_name, cancer_stage_rep)
+    if not os.path.exists(out_idx_dir):
+        os.makedirs(out_idx_dir)
+
+    #normal期所有病人文件名列表
+    uuid_fp = os.path.join(methy_intermidiate_dir, dname, cancer_name, cancer_name + "_" + cancer_stage_rep + "_uuids.txt")
+    uuids = read_tab_seperated_file_and_get_target_column(1, uuid_fp)
+
+    common_filenames = [uuid_to_filename[uuid] for uuid in uuids]
+
+    out_mean_methy_fp = os.path.join(out_idx_dir, 'promoter_mean_methy.tsv')
+    with open(out_mean_methy_fp, "w") as out_methy_file:
+        for fidx, fname in enumerate(common_filenames):
+            promoter_methy = {}
+            #fid, 即uuid的编号
+            patient_id = fidx + 1
+            print "%s %s %d of %d" % (cancer_name, cancer_stage_rep, patient_id, len(common_filenames))
+            methy_fp = os.path.join(dna_methy_data_dir, cancer_name, fname)
+            with open(methy_fp, "r") as methy_file:
+                #因为计算每个基因在promoter(通过distance_to_tss判断)和gene_body(通过cpg位置判断), CpG位点的甲基化水平
+                methy_file.readline()
+                line = methy_file.readline()
+                while line:
+                    try:
+                        line_contents = line.split("\t")
+                        gene_symbols = line_contents[5].split(";")
+                        beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
+                        gene_types = line_contents[6].split(";")
+                        for idx, gene_symbol in enumerate(gene_symbols):
+                            if gene_symbol == target_gene_name and gene_types[idx] == "protein_coding" and beta_val > 0.0:
+                                cpg_start = int(line_contents[3])
+                                g_start = gene_infos[gene_symbol]["start"]
+                                g_end = gene_infos[gene_symbol]["end"]
+                                g_strand = gene_infos[gene_symbol]["strand"]
+                                pttss = cpg_start - g_start if g_strand else g_end - cpg_start
+                                #要么是启动子，要么在gene body
+                                if - promoter_length < pttss < 0:
+                                    promoter_methy[pttss] = beta_val
+                                    break
+                    except KeyError, e1:
+                        pass
+                    line = methy_file.readline()
+            methy_vals = promoter_methy.values()
+            mean_methy_val = float(np.array(methy_vals).mean())
+            out_methy_file.write(str(patient_id) + "\t" + str(mean_methy_val) + "\n")
+    print "write %s successful" % out_mean_methy_fp
 if __name__ == '__main__':
     # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     # obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
-    normal_mean_cpg_methy("APC", "COAD")
+    # normal_mean_cpg_methy("APC", "COAD")
+    mean_methy_of_promoter("APC", "COAD","normal")
+    mean_methy_of_promoter("APC", "COAD","i")
