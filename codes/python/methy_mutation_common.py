@@ -439,7 +439,7 @@ def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage):
                                 g_end = gene_infos[gene_symbol]["end"]
                                 g_strand = gene_infos[gene_symbol]["strand"]
                                 pttss = cpg_start - g_start if g_strand else g_end - cpg_start
-                                #要么是启动子，要么在gene body
+                                #启动子
                                 if - promoter_length < pttss < 0:
                                     promoter_methy[pttss] = beta_val
                                     break
@@ -455,5 +455,5 @@ if __name__ == '__main__':
     # obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
     # normal_mean_cpg_methy("APC", "COAD")
-    mean_methy_of_promoter("APC", "COAD","normal")
-    mean_methy_of_promoter("APC", "COAD","i")
+    mean_methy_of_promoter("APC", "COAD", "normal")
+    mean_methy_of_promoter("APC", "COAD", "i")
