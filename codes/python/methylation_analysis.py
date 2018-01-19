@@ -505,7 +505,8 @@ def calc_methy_correlation_pipeline():
 
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
-    print_samplesize_of_each_cancer(sample_count_path)
+    pass
+    # print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
     just_calc_methylation_pickle_pipeline()
