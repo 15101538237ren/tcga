@@ -107,15 +107,16 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
                                     #one gene only add once for each cpg
                                     break
                             else:
+                                gname = alias_dict[gene_symbol]
                                 cpg_start = int(line_contents[3])
-                                g_start = gene_infos[gene_symbol]["start"]
-                                g_end = gene_infos[gene_symbol]["end"]
-                                g_strand = gene_infos[gene_symbol]["strand"]
+                                g_start = gene_infos[gname]["start"]
+                                g_end = gene_infos[gname]["end"]
+                                g_strand = gene_infos[gname]["strand"]
                                 pttss = cpg_start - g_start if g_strand else g_end - cpg_start
                                 # 启动子
                                 if - promoter_length < pttss < 0:
                                     try:
-                                        temp_gene_methy_dict[alias_dict[gene_symbol]].append(beta_val)
+                                        temp_gene_methy_dict[gname].append(beta_val)
                                     except KeyError, e1:
                                         pass
                                         # print "KeyError : %s" % str(e1)
