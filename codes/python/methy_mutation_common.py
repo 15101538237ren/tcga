@@ -85,7 +85,7 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids():
 def obtain_promoter_and_genebody_methy_status():
     gene_infos = {}
     for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels[gidx]
+        chr_no, start, end, strand = gene_pos_labels_used[gidx]
         gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
     tot_time = 0.0
     for cancer_name in cancer_names:
@@ -150,7 +150,7 @@ def obtain_promoter_and_genebody_methy_status():
 def obtain_promoter_and_genebody_mutation_status():
     gene_infos = {}
     for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels[gidx]
+        chr_no, start, end, strand = gene_pos_labels_used[gidx]
         gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
     tot_time = 0.0
@@ -341,7 +341,7 @@ def compute_common_mutation_or_methy_variation_samples():
 def normal_mean_cpg_methy(target_gene_name, cancer_name):
     gene_infos = {}
     for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels[gidx]
+        chr_no, start, end, strand = gene_pos_labels_used[gidx]
         gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
     cancer_stage_rep = "normal"
@@ -396,10 +396,10 @@ def normal_mean_cpg_methy(target_gene_name, cancer_name):
         print "write %s successful" % out_mean_methy_fp
 
 #计算启动子区的平均甲基化水平,输出成<病人编号,该基因启动子区平均甲基化水平>的文件
-def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage):
+def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage, xshift = 1):
     gene_infos = {}
     for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels[gidx]
+        chr_no, start, end, strand = gene_pos_labels_used[gidx]
         gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
     cancer_stage_rep = cancer_stage.replace(" ", "_")
@@ -448,12 +448,14 @@ def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage):
                     line = methy_file.readline()
             methy_vals = promoter_methy.values()
             mean_methy_val = float(np.array(methy_vals).mean())
-            out_methy_file.write(str(patient_id) + "\t" + str(mean_methy_val) + "\n")
+            # out_methy_file.write(str(patient_id) + "\t" + str(mean_methy_val) + "\n")
+            ro = random.random() * 0.4 - 0.2 + xshift
+            out_methy_file.write(str(ro) + "\t" + str(mean_methy_val) + "\n")
     print "write %s successful" % out_mean_methy_fp
 if __name__ == '__main__':
     # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     # obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
     # normal_mean_cpg_methy("APC", "COAD")
-    mean_methy_of_promoter("APC", "COAD", "normal")
-    mean_methy_of_promoter("APC", "COAD", "i")
+    mean_methy_of_promoter("APC", "COAD", "normal", xshift= 1)
+    mean_methy_of_promoter("APC", "COAD", "i", xshift= 2)

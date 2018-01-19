@@ -11,7 +11,7 @@ codes_files_dir = os.path.join(base_dir, "codes")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir ="/Volumes/Elements/tcga_raw_data"#/disk/tcga_raw_data" # "/Users/Ren/PycharmProjects/tcga_raw_data"
+raw_data_dir ="/disk/tcga_raw_data" # "/Users/Ren/PycharmProjects/tcga_raw_data" "/Volumes/Elements/tcga_raw_data"#
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
@@ -239,6 +239,40 @@ def generate_gene_position_info(gene_body_fp):
                 end = int(line_items[3])
                 gene_pos_labels[gene_idxs_dict[gene_name]][:] =  [chr_no, start, end ,strand]
     return gene_pos_labels
+
+def extract_gene_info_from_v22_gtf(v22_gtf_fp):
+    gene_pos_labels = [[-1, -1, -1, -1] for item in GENOME]
+    gene_idxs_dict = {item: gidx for gidx, item in enumerate(GENOME)}
+    chr_dict = {str(i): i for i in range(1, 23)}
+    chr_dict["X"] = 23
+    chr_dict["Y"] = 24
+
+    gtf_file = open(v22_gtf_fp, "r")
+
+    for i in range(5):
+        gtf_file.readline()
+    line = gtf_file.readline()
+
+    while line:
+        line_contents = line.split("\t")
+        feature = line_contents[2]
+        if feature == "gene":
+            groups = line_contents[-1].split(";")[0:-1]
+            group_dict = {}
+            for item in groups:
+                [k, v] = item.strip().split(" ")
+                group_dict[k] = v.replace('\"', "")
+            chr_str = line_contents[0].replace("chr", "")
+            if "gene_type" in group_dict.keys() and group_dict["gene_type"] == "protein_coding" and "gene_name" in group_dict.keys() and chr_str in chr_dict.keys():
+                    gene_name = group_dict["gene_name"]
+                    if gene_name in GENOME:
+                        chr_no = chr_dict[line_contents[0].replace("chr", "")]
+                        start = int(line_contents[3])
+                        end = int(line_contents[4])
+                        strand = 1 if line_contents[6] == "+" else 0
+                        gene_pos_labels[gene_idxs_dict[gene_name]][:] = [chr_no, start, end, strand]
+        line = gtf_file.readline()
+    return gene_pos_labels
 #label whether a gene of GENOME is a TF gene
 def label_TF_genes(input_tf_fp):
     tf_labels = [0 for item in GENOME]
@@ -273,7 +307,10 @@ msk_410_labels = label_cgi_genes(msk_410_fp)
 gene_body_fp = os.path.join(global_files_dir, "human_gene_bodys.tsv")
 gene_pos_labels = generate_gene_position_info(gene_body_fp)
 
+# v22_gtf_fp = os.path.join(global_files_dir, "gencode.v22.annotation.gtf")
+# v22_gene_pos_labels = extract_gene_info_from_v22_gtf(v22_gtf_fp)
 
+gene_pos_labels_used = gene_pos_labels
 #生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg 3: onco_and_tsg)
 def generate_gene_index(gene_idx_fp, gene_label_fp):
     with open(gene_idx_fp,"w") as gene_idx_file:
@@ -285,7 +322,7 @@ def generate_gene_index(gene_idx_fp, gene_label_fp):
     with open(gene_label_fp,"w") as gene_label_file:
         ltws = []
         for gidx, gene in enumerate(GENOME):
-            chr_no, start, end, strand = gene_pos_labels[gidx]
+            chr_no, start, end, strand = gene_pos_labels_used[gidx]
             ltw = "\t".join([str(gidx + 1), str(gene_cgi_labels[gidx]), str(tf_gene_labels[gidx]), str(gene_categorys[gidx]), str(gene_categorys_vogelstein[gidx]), str(msk_341_labels[gidx]), str(msk_410_labels[gidx]), str(chr_no), str(start), str(end), str(strand)])
             ltws.append(ltw)
         gene_label_file.write("\n".join(ltws))
@@ -301,7 +338,7 @@ gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
 gene_label_path = os.path.join(global_files_dir, "gene_label.dat")
 if __name__ == '__main__':
     generate_gene_index(gene_idx_path, gene_label_path)
-    yc_geneset_fp = os.path.join(global_files_dir,'yucheng_candidate_set.txt')
-    out_gidxs_fp = os.path.join(codes_files_dir,'matlab','yucheng_candidate_set.ind')
-    match_gene_idx_for_genenames(yc_geneset_fp,out_gidxs_fp)
+    # yc_geneset_fp = os.path.join(global_files_dir,'yucheng_candidate_set.txt')
+    # out_gidxs_fp = os.path.join(codes_files_dir,'matlab','yucheng_candidate_set.ind')
+    # match_gene_idx_for_genenames(yc_geneset_fp,out_gidxs_fp)
 

@@ -96,6 +96,7 @@ def build_ensembl_index_from_gtf(ensembl_gene_ids, gtf_filepath, gene_ids_filepa
     ensembl_gene_idx_values = ["-" for item in GENOME]
 
     gene_idxs_dict = collections.OrderedDict()
+
     for gidx, gname in enumerate(GENOME):
         if not gname in gene_idxs_dict.keys():
             gene_idxs_dict[gname] = [gidx]
@@ -124,6 +125,7 @@ def build_ensembl_index_from_gtf(ensembl_gene_ids, gtf_filepath, gene_ids_filepa
                         ensembl_gene_idx_values[g_idx] = group_dict["gene_id"]
         line = gtf_file.readline()
     write_tab_seperated_file_for_a_list(gene_ids_filepath,ensembl_gene_idx_values,index_included=True)
+
 def connect_whole_genome_to_ensembl_gene_symbol_index(ensembl_gene_symbol_index_path, out_correspondent_index_path):
     ensembl_gene_symbols = read_tab_seperated_file_and_get_target_column(1, ensembl_gene_symbol_index_path)
 

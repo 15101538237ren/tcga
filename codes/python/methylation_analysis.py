@@ -63,6 +63,11 @@ def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):
 def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuids, load=False, whole_genes= True):
 
     if not load:
+        gene_infos = {}
+        for gidx, gene_name in enumerate(GENOME):
+            chr_no, start, end, strand = gene_pos_labels_used[gidx]
+            gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
+
         profile = {}
         profile_cpg = {}
         profile_uuid = {}
@@ -92,18 +97,23 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
                 line_contents = line.split("\t")
                 try:
                     gene_symbols = line_contents[5].split(";")
-                    positions_to_tss = line_contents[8].split(";")
                     beta_val = -1.0 if line_contents[1] == "NA" else float(line_contents[1])
                     gene_types = line_contents[6].split(";")
                     for idx, gene_symbol in enumerate(gene_symbols):
-                        if gene_symbol != "." and (-promoter_length <= int(positions_to_tss[idx]) <= 0) and beta_val > 0.0:
+                        if (gene_symbol != ".") and (gene_types[idx] == "protein_coding") and (beta_val > 0.0):
                             if not whole_genes:
                                 if (gene_symbol in GENOME):
                                     temp_gene_methy_dict[gene_symbol].append(beta_val)
                                     #one gene only add once for each cpg
                                     break
                             else:
-                                if (gene_types[idx] == "protein_coding"):
+                                cpg_start = int(line_contents[3])
+                                g_start = gene_infos[gene_symbol]["start"]
+                                g_end = gene_infos[gene_symbol]["end"]
+                                g_strand = gene_infos[gene_symbol]["strand"]
+                                pttss = cpg_start - g_start if g_strand else g_end - cpg_start
+                                # 启动子
+                                if - promoter_length < pttss < 0:
                                     try:
                                         temp_gene_methy_dict[alias_dict[gene_symbol]].append(beta_val)
                                     except KeyError, e1:
@@ -498,6 +508,7 @@ if not os.path.exists(sample_count_path):
     print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
+    just_calc_methylation_pickle_pipeline()
     # dump_entropy_into_dat_pipeline()
-    calc_methy_correlation_pipeline()
+    # calc_methy_correlation_pipeline()
     pass
