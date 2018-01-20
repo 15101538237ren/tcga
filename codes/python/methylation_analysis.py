@@ -386,18 +386,17 @@ def dump_stage_std_and_mean_pipline():
 #生成dna甲基化的dat文件
 def dump_data_into_dat_pipepile():
     for cancer_name in cancer_names:
-        if cancer_name != "COAD":
-            print "now start %s" % cancer_name
-            data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
-            pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
-            temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
-            new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-            profile_list = new_profile_list if is_merge_stage else temp_profile_list
+        print "now start %s" % cancer_name
+        data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
+        pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
+        temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
+        new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
+        profile_list = new_profile_list if is_merge_stage else temp_profile_list
 
-            out_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
+        out_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
@@ -511,8 +510,8 @@ if not os.path.exists(sample_count_path):
 
 if __name__ == '__main__':
     # just_calc_methylation_pickle_pipeline()
-    # dump_data_into_dat_pipepile()
-    save_gene_methy_data_pipeline()
+    dump_data_into_dat_pipepile()
+    # save_gene_methy_data_pipeline()
     # dump_entropy_into_dat_pipeline()
     # calc_methy_correlation_pipeline()
     pass
