@@ -28,6 +28,7 @@ manifest_dir = os.path.join(intermediate_file_dir, "manifest")
 metadata_dir = os.path.join(intermediate_file_dir, "metadata")
 
 methy_intermidiate_dir = os.path.join(intermediate_file_dir, "methy_intermidiate")
+methy_matlab_data_dir = os.path.join(intermediate_file_dir, "methy_matlab_data")
 snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
 rna_intermidiate_dir = os.path.join(intermediate_file_dir, "rna_intermidiate")
 methy_entropy_dir = os.path.join(intermediate_file_dir, "methy_entropy")
@@ -40,7 +41,7 @@ methy_pvalue_dir = os.path.join(intermediate_file_dir, "methy_pvalue")
 common_sample_cnt_dir = os.path.join(intermediate_file_dir, "common_sample_cnt")
 common_patient_data_dir = os.path.join(intermediate_file_dir, "common_patients_data")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir,common_patient_data_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir,methy_matlab_data_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir,common_patient_data_dir]
 
 for dir_name in dirs:
     if not os.path.exists(dir_name):
@@ -60,7 +61,7 @@ mutation_merged_stage = ["i","ii","iii","iv","not reported"]
 mutation_stage = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","not reported"]
 
 all_cancer_names = ["BRCA", "COAD", "LIHC", "LUAD", "LUSC","BLCA" ,"ESCA","HNSC" ,"KIRC", "KIRP", "PAAD", "READ", "THCA", "STAD","LGG","OV","GBM","LAML", "PRAD","UCEC","SARC", "UVM","CESC", "DLBC"]
-cancer_names = ["KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"] #"BRCA", "COAD", 
+cancer_names = ["BRCA","COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"] #
 
 SNP_Ins_Del_classification = {"SNP":0, "INS": 1, "DEL":2}
 mutation_classification = {"Frame_Shift_Ins":1, "In_Frame_Ins":2, "Frame_Shift_Del":3, "In_Frame_Del":4,

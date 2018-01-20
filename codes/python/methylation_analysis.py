@@ -232,10 +232,10 @@ def save_data_to_file(arr, path, precision = 4):
     file_out.close()
 
 #保存cancer_name癌症,out_stage_list中阶段的DNA甲基化数据
-def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_data = False,out_xy=False, out_all_stage=False, target_gene_name=None):
+def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_data = False,out_xy=False, out_all_stage=False, target_gene_list=None):
     profile = profile_list[0]
-    target_gene_list =[target_gene_name] if target_gene_name else GENOME
-    out_methy_cancer_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+    target_gene_list = target_gene_list if target_gene_list else GENOME
+    out_methy_cancer_dir = os.path.join(methy_matlab_data_dir, dname, cancer_name)
     if not os.path.exists(out_methy_cancer_dir):
         os.makedirs(out_methy_cancer_dir)
     for gene in target_gene_list:
@@ -386,30 +386,30 @@ def dump_stage_std_and_mean_pipline():
 #生成dna甲基化的dat文件
 def dump_data_into_dat_pipepile():
     for cancer_name in cancer_names:
-        print "now start %s" % cancer_name
-        data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
-        pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
-        temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
-        new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-        profile_list = new_profile_list if is_merge_stage else temp_profile_list
+        if cancer_name != "COAD":
+            print "now start %s" % cancer_name
+            data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
+            pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
+            temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
+            new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
+            profile_list = new_profile_list if is_merge_stage else temp_profile_list
 
-        out_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-        dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
+            out_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+            dump_data_into_dat_according_to_cancer_type_and_stage(cancer_name, uuid_dict[cancer_name], out_dir, profile_list, is_merge_stage=is_merge_stage)
 
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
-    target_gene_name = "EYA4"
+    target_gene_list = ['APC']
     for cancer_name in cancer_names:
-        if cancer_name == "COAD":
-            print "now start %s" % cancer_name
-            data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
-            pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
-            temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
-            new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-            save_gene_methy_data(cancer_name, new_profile_list, out_stage_list, out_stage_data=False, out_xy=False, out_all_stage=True, target_gene_name=target_gene_name)
+        print "now start %s" % cancer_name
+        data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
+        pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
+        temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name,data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
+        new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
+        save_gene_methy_data(cancer_name, new_profile_list, out_stage_list, out_stage_data=True, out_xy=True, out_all_stage=True,target_gene_list=target_gene_list)
 
 #只进行DNA甲基化数据缓存
 def just_calc_methylation_pickle_pipeline():
@@ -510,7 +510,9 @@ if not os.path.exists(sample_count_path):
     # print_samplesize_of_each_cancer(sample_count_path)
 
 if __name__ == '__main__':
-    just_calc_methylation_pickle_pipeline()
+    # just_calc_methylation_pickle_pipeline()
+    # dump_data_into_dat_pipepile()
+    save_gene_methy_data_pipeline()
     # dump_entropy_into_dat_pipeline()
     # calc_methy_correlation_pipeline()
     pass
