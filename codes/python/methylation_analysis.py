@@ -401,7 +401,8 @@ def dump_data_into_dat_pipepile():
 # 保存甲基化数据的pipline
 def save_gene_methy_data_pipeline():
     out_stage_list = ["normal","i","ii","iii","iv"]
-    target_gene_list = ['APC']
+    vogelstein_genes = [ gene for gidx, gene in enumerate(GENOME) if gene_categorys_vogelstein[gidx] > 0]
+    target_gene_list = vogelstein_genes
     for cancer_name in cancer_names:
         print "now start %s" % cancer_name
         data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
@@ -511,7 +512,7 @@ if not os.path.exists(sample_count_path):
 if __name__ == '__main__':
     # just_calc_methylation_pickle_pipeline()
     dump_data_into_dat_pipepile()
-    # save_gene_methy_data_pipeline()
+    save_gene_methy_data_pipeline()
     # dump_entropy_into_dat_pipeline()
     # calc_methy_correlation_pipeline()
     pass
