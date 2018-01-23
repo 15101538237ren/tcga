@@ -529,13 +529,30 @@ def sort_pscore_pipline():
                     line = pscore_file.readline()
 
             sorted_pscore = sorted(pscore_dict.items(), key=lambda d: d[1], reverse=True)
-            out_sorted_pscore_fp = os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_sorted.txt")
-            with open(out_sorted_pscore_fp, "w") as out_sorted_pscore_file:
-                ltws = []
-                for k, v in sorted_pscore:
-                    ltws.append("\t".join([str(k), GENOME[k - 1], str(v)]))
-                out_sorted_pscore_file.write("\n".join(ltws))
-                print "write %s successful" % out_sorted_pscore_fp
+            out_sorted_pscore_all_file = open(os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_sorted.txt"),"w")
+            out_sorted_pscore_onco_file = open(os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_onco.txt"),"w")
+            out_sorted_pscore_tsg_file = open(os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_tsg.txt"),"w")
+            out_sorted_pscore_both_file = open(os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_both.txt"),"w")
+            out_sorted_pscore_other_file = open(os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_other.txt"),"w")
+
+            for k, v in sorted_pscore:
+                ltw = "\t".join([str(k), GENOME[k - 1], str(v)]) + "\n"
+                if gene_categorys[k - 1] == 1:
+                    out_sorted_pscore_onco_file.write(ltw)
+                elif gene_categorys[k - 1] == 2:
+                    out_sorted_pscore_tsg_file.write(ltw)
+                elif gene_categorys[k - 1] == 3:
+                    out_sorted_pscore_both_file.write(ltw)
+                else:
+                    out_sorted_pscore_other_file.write(ltw)
+                out_sorted_pscore_all_file.write(ltw)
+            print "write sorted files successful"
+
+            out_sorted_pscore_all_file.close()
+            out_sorted_pscore_onco_file.close()
+            out_sorted_pscore_tsg_file.close()
+            out_sorted_pscore_both_file.close()
+            out_sorted_pscore_other_file.close()
 
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
