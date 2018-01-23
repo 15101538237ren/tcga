@@ -10,7 +10,7 @@ if ~exist(figure_base_dir)
     mkdir(figure_base_dir);
 end
 
-cancers={'COAD'};
+cancers={'BRCA';'LIHC';'LUAD';'LUSC';'KIRC';'KIRP';'THCA'};
 for i = 1: length(cancers)
     cancer_name = char(cancers(i));
     fig = figure(i);

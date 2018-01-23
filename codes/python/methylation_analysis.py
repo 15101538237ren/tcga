@@ -238,6 +238,7 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
     out_methy_cancer_dir = os.path.join(methy_matlab_data_dir, dname, cancer_name)
     if not os.path.exists(out_methy_cancer_dir):
         os.makedirs(out_methy_cancer_dir)
+
     for gene in target_gene_list:
         if gene in profile.keys():
             gene_data = profile[gene]
@@ -248,6 +249,7 @@ def save_gene_methy_data(cancer_name, profile_list, out_stage_list, out_stage_da
                 if stage in out_stage_list:
                     if out_xy:
                         methy_cases_vals = gene_data[idx]
+
                         for item_y in methy_cases_vals:
                             ro = random.random()*0.3 - 0.15
                             x = idx + 1 + ro
@@ -337,7 +339,12 @@ def print_samplesize_of_each_cancer(sample_count_filepath):
 def calc_cancer_means_and_stds_for_genome(cancer_name, cancer_profile_arr, stage_list, cancer_mean_std_dir):
     cancer_profile = cancer_profile_arr[0]
     len_stages = len(cancer_profile["APC"]) - 1 #去掉not reported
-    stage_names =[stage_list[item] for item in range(len_stages)]
+    print "len_stages %d" % len_stages
+    print "len merged stage %d" % len(merged_stage)
+    print "len stage list %d" % len(stage_list)
+    print stage_list
+
+    stage_names = stage_list
 
     out_stages_fp = os.path.join(cancer_mean_std_dir, cancer_name + "_stages.txt")
     write_tab_seperated_file_for_a_list(out_stages_fp, stage_names, index_included=True)
@@ -505,6 +512,30 @@ def calc_methy_correlation_pipeline():
         gidx_in_dir = out_dir
         calc_methy_correlation(cancer_name, methy_in_dir, gidx_in_dir, out_dir, stage_wanted, middle_name)
 
+def sort_pscore_pipline():
+    mid_names = ["p", "n"]
+    for cancer_name in cancer_names:
+        for mid_name in mid_names:
+            pscore_dict = {}
+            pscore_fp = os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score.dat")
+            with open(pscore_fp, "r") as pscore_file:
+                line = pscore_file.readline()
+                while line:
+                    line_contents = line.strip("\n").split("\t")
+                    gidx = int(line_contents[0])
+                    pscore = float(line_contents[-1])
+                    pscore_dict[gidx] = pscore
+                    line = pscore_file.readline()
+
+            sorted_pscore = sorted(pscore_dict.items(), key=lambda d: d[1], reverse=True)
+            out_sorted_pscore_fp = os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score_sorted.txt")
+            with open(out_sorted_pscore_fp, "w") as out_sorted_pscore_file:
+                ltws = []
+                for k, v in sorted_pscore:
+                    ltws.append("\t".join([str(k), GENOME[k - 1], str(v)]))
+                    out_sorted_pscore_file.write("\n".join(ltws))
+                print "write %s successful" % out_sorted_pscore_fp
+
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     pass
@@ -512,8 +543,10 @@ if not os.path.exists(sample_count_path):
 
 if __name__ == '__main__':
     # just_calc_methylation_pickle_pipeline()
-    dump_data_into_dat_pipepile()
-    save_gene_methy_data_pipeline()
+    # dump_data_into_dat_pipepile()
+    # save_gene_methy_data_pipeline()
     # dump_entropy_into_dat_pipeline()
+    # dump_stage_std_and_mean_pipline()
     # calc_methy_correlation_pipeline()
+    sort_pscore_pipline()
     pass

@@ -11,7 +11,7 @@ if ~exist(figure_base_dir)
 end
 xlimt = 4;
 xticks = [0, 1, 2, 3, 4];
-cancers={'COAD'};
+cancers={'BRCA';'COAD';'LIHC';'LUAD';'LUSC';'KIRC';'KIRP';'THCA'};
 for i = 1: length(cancers)
     cancer_name = char(cancers(i));
     fig = figure(i);

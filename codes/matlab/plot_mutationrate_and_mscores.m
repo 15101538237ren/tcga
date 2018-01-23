@@ -4,11 +4,11 @@ clc;
 clear all;
 close all;
 base_path = './';
-%mutation_base_dir = '../../data/intermediate_file/snv_intermidiate/merged_stage/';
-%pval_base_dir = '../../data/intermediate_file/methy_pvalue/merged_stage/';
+mutation_base_dir = '../../data/intermediate_file/snv_intermidiate/merged_stage/';
+pval_base_dir = '../../data/intermediate_file/methy_pvalue/merged_stage/';
 
-mutation_base_dir = 'I:/intermediate_file/snv_intermidiate/merged_stage/';
-pval_base_dir = 'I:/intermediate_file/methy_pvalue/merged_stage/';
+% mutation_base_dir = 'I:/intermediate_file/snv_intermidiate/merged_stage/';
+% pval_base_dir = 'I:/intermediate_file/methy_pvalue/merged_stage/';
 figure_base_dir = '../../figures/mutation_rate_and_mscore/';
 cancer_name='COAD';
 figdir = strcat(figure_base_dir, cancer_name,'/');
@@ -16,7 +16,10 @@ figdir = strcat(figure_base_dir, cancer_name,'/');
 if ~exist(figdir)
     mkdir(figdir);
 end
-
+mp_score_threshold = 0.8;
+mutation_rate_threshold = 0.1;
+fpre = '../../data/intermediate_file/';
+sig_base_dir = strcat(fpre, 'gene_classification_mp_',num2str(mp_score_threshold),'_mut_',num2str(mutation_rate_threshold),'/');
 gene_types = {'significant_genes';'significant_no_genes';'TSG_Vogel';'Onco_TSG_Vogel';};
 gene_type_names = {'Significant TSG & Onco Genes of Zhao list';'Significant Other Genes';'Vogelstein TSG list';' Vogelstein Onco Genes list'};
 fig_names = {'Significant_Genes';'Vogelstein_Genes'};
@@ -35,7 +38,7 @@ for i = 1: 2
            dis_r = 0.02;
         end
         gtname = char(gene_types(kk));
-        [order, gidxs, gene_names] = textread(strcat(gtname,'.ind'),'%d\t%d\t%s');
+        [order, gidxs, gene_names] = textread(strcat(sig_base_dir, gtname,'.ind'),'%d\t%d\t%s');
         len_gidxs = length(gidxs);
         mp_score = load(strcat(pval_base_dir,cancer_name,'/', cancer_name,'_p_score.dat'));
         mn_score = load(strcat(pval_base_dir,cancer_name,'/', cancer_name,'_n_score.dat'));
@@ -117,8 +120,8 @@ for i = 1: 2
         axis off;
         title(char(gene_type_names(kk)),'FontWeight','normal')
     end
-    exportfig(fig,strcat(figdir, char(fig_names(i)),'.png'),'color','cmyk');
+    exportfig(fig,strcat(figdir, char(fig_names(i)),'.eps'),'color','cmyk');
     %print(fig,'a.pdf','-dpdf','-opengl');
-    %close all;
+    close all;
 end
 end

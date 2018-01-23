@@ -35,5 +35,5 @@ Tsg=2;
 Both=3;
 Onco_Vogel_indexs = find(L(:,5)==Onco);
 TSG_Vogel_indexs = find(L(:,5)==Tsg);
-match_gene_name(Onco_Vogel_indexs,'Onco_TSG_Vogel.ind');
-match_gene_name(TSG_Vogel_indexs,'TSG_Vogel.ind');
+match_gene_name(Onco_Vogel_indexs,strcat(base_path,'Onco_TSG_Vogel.ind'));
+match_gene_name(TSG_Vogel_indexs,strcat(base_path,'TSG_Vogel.ind'));

@@ -276,7 +276,7 @@ def obtain_promoter_and_genebody_mutation_status():
 def compute_common_mutation_or_methy_variation_samples():
     mutation_stage = "i"
     pvalue_label = "p"
-    sig_file_names = ["significant_genes"]#,"significant_genes", "significant_no_genes","significant_methy_genes", "significant_mut_genes"
+    sig_file_names = ["significant_genes_all", "significant_genes", "significant_no_genes","significant_methy_genes", "significant_mut_genes"]
     gene_classification_dir_name = "gene_classification_mp_0.8_mut_0.1"
 
     for cancer_name in cancer_names:
@@ -413,7 +413,6 @@ def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage, xshift =
     uuids = read_tab_seperated_file_and_get_target_column(1, uuid_fp)
 
     common_filenames = [uuid_to_filename[uuid] for uuid in uuids]
-
     out_mean_methy_fp = os.path.join(out_idx_dir, 'promoter_mean_methy.tsv')
     with open(out_mean_methy_fp, "w") as out_methy_file:
         for fidx, fname in enumerate(common_filenames):
@@ -455,7 +454,7 @@ def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage, xshift =
 if __name__ == '__main__':
     # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids()
     # obtain_promoter_and_genebody_mutation_status()
-    # compute_common_mutation_or_methy_variation_samples()
+    compute_common_mutation_or_methy_variation_samples()
     # normal_mean_cpg_methy("APC", "COAD")
-    mean_methy_of_promoter("APC", "COAD", "normal", xshift= 1)
-    mean_methy_of_promoter("APC", "COAD", "i", xshift= 2)
+    # mean_methy_of_promoter("APC", "COAD", "normal", xshift= 1)
+    # mean_methy_of_promoter("APC", "COAD", "i", xshift= 2)

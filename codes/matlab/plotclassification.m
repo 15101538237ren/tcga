@@ -187,8 +187,8 @@ for i=1:8
             fill([k-1, k-1,k,k],[i-1, i,i,i-1],col(3),'linestyle','none');
         end
     end
-    text(306,-1.7,'TTN','color','black','fontsize',10,'Fontweight','bold');
-    arx = 0.848;
+    text(275,-1.7,'TTN','color','black','fontsize',10,'Fontweight','bold');
+    arx = 0.854;
     ar = annotation('arrow',[arx arx],[0.436 0.475]);
     ar.LineWidth = 0.6;
     text(-floor(0.097*n),i-0.5,char(genes(i)),'fontsize',8);

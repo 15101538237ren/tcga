@@ -9,7 +9,7 @@ end
 entropy_base_dir = '../../data/intermediate_file/methy_entropy/merged_stage/';
 
 gene_label_path = '../../global_files/gene_label.dat';
-gene_label = [[0,0,0,0]; load(gene_label_path)];
+gene_label = [zeros(1,11); load(gene_label_path)];
 
 gene_category_col_idx = 4; % the column index of the gene category in the gene_label.dat
 gene_categories = [[0, 0];[1, 3];[2, 3];[0, 0]]; %Genome doesn't have category, therefore, the 1st element in this array have no use ; Onco category: 1 or 3; TSG: 2 or 3; Other: 0; %;

@@ -8,12 +8,11 @@ mutation_rate_threshold = 0.1;
 
 stage = 'i';
 cancer_names = {'BRCA';'COAD'; 'LIHC'; 'KIRC'; 'KIRP'; 'LUAD'; 'LUSC'; 'THCA'};
-%fpre = '../../data/intermediate_file/';
-fpre = 'I:/intermediate_file/';
+fpre = '../../data/intermediate_file/';
+%fpre = 'I:/intermediate_file/';
 gene_class_path = strcat(fpre, 'gene_classification_mp_',num2str(mp_score_threshold),'_mut_',num2str(mutation_rate_threshold),'/');
 
-figure_path = '../../figures/gene_classification/';
-paths = {gene_class_path; figure_path};
+paths = {gene_class_path};
 for i = 1: length(paths)
     if ~exist(char(paths(i)))
         mkdir(char(paths(i)));
