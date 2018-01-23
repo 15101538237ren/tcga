@@ -516,6 +516,7 @@ def sort_pscore_pipline():
     mid_names = ["p", "n"]
     for cancer_name in cancer_names:
         for mid_name in mid_names:
+            print "now %s %s" %(cancer_name, mid_name)
             pscore_dict = {}
             pscore_fp = os.path.join(methy_pvalue_dir, dname, cancer_name, cancer_name + "_" + mid_name + "_score.dat")
             with open(pscore_fp, "r") as pscore_file:
@@ -533,7 +534,7 @@ def sort_pscore_pipline():
                 ltws = []
                 for k, v in sorted_pscore:
                     ltws.append("\t".join([str(k), GENOME[k - 1], str(v)]))
-                    out_sorted_pscore_file.write("\n".join(ltws))
+                out_sorted_pscore_file.write("\n".join(ltws))
                 print "write %s successful" % out_sorted_pscore_fp
 
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
