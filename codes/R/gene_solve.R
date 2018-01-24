@@ -2,7 +2,7 @@
 library(hash)
 library(fitdistrplus)
 library(dplyr)
-setwd("/disk/tcga/") # ~/PycharmProjects/tcga
+setwd("~/PycharmProjects/tcga") #   /disk/tcga/
 base_dir <- getwd()
 gene_idx_fp = file.path(base_dir,"global_files","gene_idx.txt")
 gene_names = read.table(gene_idx_fp, header=FALSE, stringsAsFactors = FALSE) 

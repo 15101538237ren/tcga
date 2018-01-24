@@ -8,4 +8,6 @@ others
 *.eps
 *.png
 .DS_Store
+.RData
 .Rhistory
+codes/matlab/yc_plot/

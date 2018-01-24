@@ -3,8 +3,6 @@ clc;
 clear all;
 close all;
 base_path = './';
-%mutation_base_dir = '../../data/intermediate_file/snv_intermidiate/merged_stage/';
-%pval_base_dir = '../../data/intermediate_file/methy_pvalue/merged_stage/';
 
 sample_base_dir = 'I:/intermediate_file/common_patients_data/';
 pval_base_dir = 'I:/intermediate_file/methy_pvalue/merged_stage/';

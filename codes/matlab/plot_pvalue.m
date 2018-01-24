@@ -3,6 +3,10 @@ clc;
 clear all;
 close all;
 global An Ai Aii Aiii Aiv PP PN Sp Sn E cancer_name
+figure_path = '../../figures/plot_pvalue/';
+if ~exist(figure_path) 
+    mkdir(figure_path)
+end 
 cancer_name = 'COAD';
 stage_of_pscore_observed = 'i';
 out_significant_pscore_gidx_dir = ['../../data/intermediate_file/methy_corr/merged_stage/',cancer_name,'/'];
@@ -29,24 +33,25 @@ m=50; % Totoal sample number;
 
 fig=figure(1);
 clf();
-APC=832;
+gene_name = 'WT1';
+WT1=18267;
 
 subplot(2,2,1);
 hold on;
 dx=0.03;
-[u,x]=hist(An(APC,2:end),0:dx:1);
+[u,x]=hist(An(WT1,2:end),0:dx:1);
 plot(x,100*u/sum(u));
 
-[u,x]=hist(Ai(APC,2:end),0:dx:1);
+[u,x]=hist(Ai(WT1,2:end),0:dx:1);
 plot(x,100*u/sum(u));
 
-[u,x]=hist(Aii(APC,2:end),0:dx:1);
+[u,x]=hist(Aii(WT1,2:end),0:dx:1);
 plot(x,100*u/sum(u));
 
-[u,x]=hist(Aiii(APC,2:end),0:dx:1);
+[u,x]=hist(Aiii(WT1,2:end),0:dx:1);
 plot(x,100*u/sum(u));
 
-[u,x]=hist(Aiv(APC,2:end),0:dx:1);
+[u,x]=hist(Aiv(WT1,2:end),0:dx:1);
 plot(x,100*u/sum(u));
 
 legend('normal','i','ii','iii','iv');
@@ -59,15 +64,15 @@ ylim([0 80]);
 
 % n=size(An,2)-1;
 % r0=0.1*rand(1,n);
-% plot(0.2+r0,An(APC,2:end),'k.');
+% plot(0.2+r0,An(WT1,2:end),'k.');
 % n=size(Ai,2)-1;
 % r0=0.1*rand(1,n);
-% plot(0.6+r0,Ai(APC,2:end),'k.');
+% plot(0.6+r0,Ai(WT1,2:end),'k.');
 % box on;
 % xlim([0 1]);
 % xlabel('stage');
 % ylabel('Beta-value');
-title('(a) Distribuiton of Beta-values of APC');
+title('(a) Distribuiton of Beta-values of WT1');
 
 subplot(2,2,2);
 hold on;
@@ -149,7 +154,7 @@ xlim([0 51]);
 ylim([0 2200]);
 title('(d) Number of abnormal genes in each sample');
 
-exportfig(fig,'APC.eps','color','cmyk','fontmode','fixed','fontsize',10);
+exportfig(fig,strcat(figure_path,gene_name,'.eps'),'color','cmyk','fontmode','fixed','fontsize',10);
 close all;
 
 end
