@@ -28,7 +28,7 @@ fclose(fid);
 
 cancer_name='COAD';
 cancer_stage='i';
-gene_id = 136;  % APC gene 831
+gene_id = 831;  % APC gene 831
 mutation_type_num = 14;
 sample_id_list = zeros(1,100);
 sample_num = 0;
@@ -49,7 +49,7 @@ tss_area_pos = -2000;
 tss_len = 2000;
 global gene_body_len;
 gene_body_len = gene_body_absolute_end - gene_body_absolute_start;
-subfigure_num = 16;
+subfigure_num = 2;
 
 fid = fopen(sample_id_file_path, 'r');
 while ~feof(fid)                                      % 判断是否为文件末尾               
@@ -61,13 +61,15 @@ end
 fclose(fid);
 
 for sampleId = 1:sample_num
+%sampleId = 2;
     methy_file_path = strcat(cancer_sample_dir, num2str(sampleId), '_methy.tsv');
     ins_file_path = strcat(cancer_sample_dir, num2str(sampleId), '_INS.tsv');
     del_file_path = strcat(cancer_sample_dir, num2str(sampleId), '_DEL.tsv');
     snp_file_path = strcat(cancer_sample_dir, num2str(sampleId), '_SNP.tsv');
     
-    fig = figure();
-    
+    fig = figure(sampleId);
+    clf();
+    title(num2str(sampleId));
     cur_fig_num = subfigure_num;
     space_height = 0.03;
     left = 0.03;
@@ -96,19 +98,19 @@ for sampleId = 1:sample_num
     plotCoord(idx, axe_region, plot_region);
     plot_methy(methy_file_path, gene_id, tss_len, sub_down);
     
-    for typeId = 1:mutation_type_num
-        cur_fig_num = cur_fig_num  - 1;
-        idx = subfigure_num - cur_fig_num + 1;
-        bottom = cur_fig_num * space_height + (cur_fig_num - 1) * height;
-        axe_region = [left bottom width height];
-        plotCoord(idx, axe_region, plot_region);
-        mutation_type = mutation_classification_list{typeId};
-        plot_mutation(ins_file_path, gene_id, typeId, 0);
-        plot_mutation(del_file_path, gene_id, typeId, 1);
-        plot_mutation(snp_file_path, gene_id, typeId, 2);
-    end
-    set(gcf,'visible','off');
-    print(fig,strcat(figdir, num2str(sampleId), '.pdf'),'-dpdf','-opengl');
+%     for typeId = 1:mutation_type_num
+%         cur_fig_num = cur_fig_num  - 1;
+%         idx = subfigure_num - cur_fig_num + 1;
+%         bottom = cur_fig_num * space_height + (cur_fig_num - 1) * height;
+%         axe_region = [left bottom width height];
+%         plotCoord(idx, axe_region, plot_region);
+%         mutation_type = mutation_classification_list{typeId};
+%         plot_mutation(ins_file_path, gene_id, typeId, 0);
+%         plot_mutation(del_file_path, gene_id, typeId, 1);
+%         plot_mutation(snp_file_path, gene_id, typeId, 2);
+%     end
+    %set(gcf,'visible','off');
+%    print(fig,strcat(figdir, num2str(sampleId), '.pdf'),'-dpdf','-opengl');
     close all;
     %break;
 end
