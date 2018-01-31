@@ -1,12 +1,18 @@
 function methygenes()
-type = 4;
+type = 3;
 %An=load('../COAD/COAD_normal_methy_dat.dat');
 %Ai=load('../COAD/COAD_i_methy_dat.dat');
 
-An=load('G:/intermediate_file/methy_intermidiate/merged_stage/COAD/COAD_normal_methy_dat.dat');
-Ai=load('G:/intermediate_file/methy_intermidiate/merged_stage/COAD/COAD_i_methy_dat.dat');
+An=load('../../data/intermediate_file/methy_intermidiate/merged_stage/COAD/COAD_normal_methy_dat.dat');
+Ai=load('../../data/intermediate_file/methy_intermidiate/merged_stage/COAD/COAD_i_methy_dat.dat');
 
 dx=0.02;
+
+figdir = '../../figures/methygenes/';
+
+if ~exist(figdir)
+    mkdir(figdir);
+end
 
 if(type == 1)
     %Oncognes
@@ -64,5 +70,6 @@ for i=1:4
     set(gca,'xtick',[0.15,0.35]);
     set(gca,'xticklabel',{'normal','i'});
 end
-exportfig(fig,strcat(typeStr,'.eps'),'color','cmyk','fontmode','fixed','fontsize',10);
+exportfig(fig,strcat(figdir,typeStr,'.eps'),'color','cmyk','fontmode','fixed','fontsize',10);
+close all;
 end

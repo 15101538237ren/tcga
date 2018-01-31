@@ -2,6 +2,7 @@ function plot_mutation_classification_single()
 global sample_base_dir;
 global sample_num;
 global cancer_name;
+global gene_name;
 global gene_id;
 global tss_len;
 global figdir;
@@ -30,7 +31,7 @@ for k=1:fig_num
     J = find(normal_methy_list(:,1) >= 0);
     normal_methy_list(J,1) = normal_methy_list(J,1) / gene_body_len;
     bar(normal_methy_list(:,1), normal_methy_list(:,2), 'k', 'LineWidth',1.5);
-    title(['COAD APC normal average beta-value']);
+    title(strcat(gene_name, ' normal average beta-value'));
     xlim([-0.2 1]);
     ylim([0 1]);
 
@@ -38,7 +39,7 @@ for k=1:fig_num
         sample_id=sub_plot_num*(k-1)+i;
         subplot(sub_plot_num+1,1,i+1);
         hold on;
-        title(num2str(sample_id));
+        title(strcat(num2str(sample_id)));
         xlim([-0.2 1]);
         ylim([0 1]);
         py.get_gene_data.get_sample_methy(sample_base_dir, cancer_name, cancer_stage, sample_id, gene_id);
@@ -73,5 +74,6 @@ for k=1:fig_num
     end
     print(fig,strcat(figdir, num2str(k), '_compare.pdf'),'-dpdf','-opengl');
 end
-
+close all;
+delete('*.txt');
 end

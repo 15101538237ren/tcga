@@ -11,7 +11,7 @@ codes_files_dir = os.path.join(base_dir, "codes")
 figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
-raw_data_dir ="/Volumes/Elements/tcga_raw_data"# "/Users/Ren/PycharmProjects/tcga_raw_data" # "/disk/tcga_raw_data"
+raw_data_dir ="/Volumes/Elements/tcga_raw_data"#"/Users/Ren/PycharmProjects/tcga_raw_data" # "/disk/tcga_raw_data"
 
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
@@ -61,7 +61,7 @@ mutation_merged_stage = ["i","ii","iii","iv","not reported"]
 mutation_stage = ["i","ia","ib","ii","iia","iib","iic","iii","iiia","iiib","iiic","iv","iva","ivb","ivc","not reported"]
 
 all_cancer_names = ["BRCA", "COAD", "LIHC", "LUAD", "LUSC","BLCA" ,"ESCA","HNSC" ,"KIRC", "KIRP", "PAAD", "READ", "THCA", "STAD","LGG","OV","GBM","LAML", "PRAD","UCEC","SARC", "UVM","CESC", "DLBC"]
-cancer_names = ["BRCA","COAD", "KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"] #
+cancer_names = ["BRCA","COAD","KIRC", "KIRP", "LIHC", "LUAD", "LUSC", "THCA"] #
 
 SNP_Ins_Del_classification = {"SNP":0, "INS": 1, "DEL":2}
 mutation_classification = {"Frame_Shift_Ins":1, "In_Frame_Ins":2, "Frame_Shift_Del":3, "In_Frame_Del":4,

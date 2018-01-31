@@ -338,13 +338,8 @@ def print_samplesize_of_each_cancer(sample_count_filepath):
 
 def calc_cancer_means_and_stds_for_genome(cancer_name, cancer_profile_arr, stage_list, cancer_mean_std_dir):
     cancer_profile = cancer_profile_arr[0]
-    len_stages = len(cancer_profile["APC"]) - 1 #去掉not reported
-    print "len_stages %d" % len_stages
-    print "len merged stage %d" % len(merged_stage)
-    print "len stage list %d" % len(stage_list)
-    print stage_list
-
     stage_names = stage_list
+    len_stages = len(stage_list)
 
     out_stages_fp = os.path.join(cancer_mean_std_dir, cancer_name + "_stages.txt")
     write_tab_seperated_file_for_a_list(out_stages_fp, stage_names, index_included=True)
@@ -380,15 +375,16 @@ def calc_cancer_means_and_stds_for_genome(cancer_name, cancer_profile_arr, stage
 
 def dump_stage_std_and_mean_pipline():
     for cancer_name in cancer_names:
-        data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
-        pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
-        temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
-        new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
-        profile_list = new_profile_list if is_merge_stage else temp_profile_list
-        cancer_mean_std_dir = os.path.join(methy_mean_std_dir, dname, cancer_name)
-        if not os.path.exists(cancer_mean_std_dir):
-            os.makedirs(cancer_mean_std_dir)
-        calc_cancer_means_and_stds_for_genome(cancer_name, profile_list, stage_list, cancer_mean_std_dir)
+        if cancer_name == "COAD":
+            data_path = dna_methy_data_dir + os.sep+ cancer_name + os.sep
+            pickle_filepath = methy_pkl_dir + os.sep + cancer_name + ".pkl"
+            temp_profile_list = gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuid_dict[cancer_name], load=True, whole_genes= True)
+            new_profile_list = convert_origin_profile_into_merged_profile(temp_profile_list)
+            profile_list = new_profile_list if is_merge_stage else temp_profile_list
+            cancer_mean_std_dir = os.path.join(methy_mean_std_dir, dname, cancer_name)
+            if not os.path.exists(cancer_mean_std_dir):
+                os.makedirs(cancer_mean_std_dir)
+            calc_cancer_means_and_stds_for_genome(cancer_name, profile_list, stage_list, cancer_mean_std_dir)
 
 #生成dna甲基化的dat文件
 def dump_data_into_dat_pipepile():
@@ -566,5 +562,5 @@ if __name__ == '__main__':
     # dump_entropy_into_dat_pipeline()
     # dump_stage_std_and_mean_pipline()
     # calc_methy_correlation_pipeline()
-    sort_pscore_pipline()
+    # sort_pscore_pipline()
     pass

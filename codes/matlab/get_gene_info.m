@@ -42,10 +42,16 @@ gene_body_absolute_start = gene_label_info(gene_id, 9);
 gene_body_absolute_end = gene_label_info(gene_id, 10);
 gene_body_len = gene_body_absolute_end - gene_body_absolute_start;
 
+Path = py.sys.path;
+if count(Path,'.') == 0
+    insert(Path,int32(0),'.');
+end
+
 py.importlib.import_module('get_gene_data');
 
 %count_sample_num
-sample_base_dir = 'G:/intermediate_file/common_patients_data/';
+% sample_base_dir = 'G:/intermediate_file/common_patients_data/';
+sample_base_dir = '/Volumes/Elements/intermediate_file/common_patients_data/';
 out_sample_num_file = 'out_sample_num.txt';
 py.get_gene_data.get_sample_num(sample_base_dir, cancer_name, cancer_stage);
 sample_num = load(out_sample_num_file);

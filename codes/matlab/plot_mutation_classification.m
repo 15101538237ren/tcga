@@ -54,9 +54,6 @@ title_str = sprintf('%s %s i-th average beta-value', cancer_name, gene_name);
 title([title_str]);
 xlim([-0.2 1]);
 ylim([0 1]);
-hold on;
-
-
 % %two subfigure
 % %average methy
 % subplot(4,1,1);
@@ -122,5 +119,7 @@ hold on;
 % xlim([-0.2 1]);
 % ylim([0 1]);
 % 
-% print(fig,strcat(figdir, 'COAD_methy_ave_mutation.pdf'),'-dpdf','-opengl');
+print(fig,strcat(figdir, 'COAD_avg_methy_and_mutation.pdf'),'-dpdf','-opengl');
+close all;
+delete('*.txt');
 end
