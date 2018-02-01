@@ -107,10 +107,7 @@ def extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids(norm
     return 0
 
 def obtain_promoter_and_genebody_methy_status(normal= False):
-    gene_infos = {}
-    for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels_used[gidx]
-        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
+
     tot_time = 0.0
     for cancer_name in cancer_names:
         stages = ["normal"] if normal else common_stages
@@ -175,10 +172,6 @@ def obtain_promoter_and_genebody_methy_status(normal= False):
                 print "%d of %d, %.2f%%, Total Time: %.2f, Time Left: %.2f" % (sidx + 1, len(common_submitter_ids), (sidx + 1.0)/len(common_submitter_ids), tot_time, remain_time)
 
 def obtain_promoter_and_genebody_mutation_status():
-    gene_infos = {}
-    for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels_used[gidx]
-        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
     tot_time = 0.0
 
@@ -366,10 +359,6 @@ def compute_common_mutation_or_methy_variation_samples():
                 print "save %s successful!" % out_common_pval_fp
 
 def normal_mean_cpg_methy(target_gene_name, cancer_name):
-    gene_infos = {}
-    for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels_used[gidx]
-        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
     cancer_stage_rep = "normal"
 
@@ -424,10 +413,6 @@ def normal_mean_cpg_methy(target_gene_name, cancer_name):
 
 #用来画不同阶段病人的甲基化分布水平scatter用, 计算启动子区的平均甲基化水平,输出成<病人编号,该基因启动子区平均甲基化水平的文件
 def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage, xshift = 1):
-    gene_infos = {}
-    for gidx, gene_name in enumerate(GENOME):
-        chr_no, start, end, strand = gene_pos_labels_used[gidx]
-        gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
     cancer_stage_rep = cancer_stage.replace(" ", "_")
 

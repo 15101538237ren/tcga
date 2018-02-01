@@ -21,6 +21,7 @@ cnv_data_dir = os.path.join(raw_data_dir, "cnv")
 GRCh38_dir = os.path.join(raw_data_dir, "GRCh38")
 
 intermediate_file_dir = os.path.join(data_dir, "intermediate_file")
+huge_global_file_dir = os.path.join(data_dir, "huge_global_files")
 
 #fourth level dir
 methy_pkl_dir = os.path.join(intermediate_file_dir, "methy_pkl")
@@ -41,7 +42,7 @@ methy_pvalue_dir = os.path.join(intermediate_file_dir, "methy_pvalue")
 common_sample_cnt_dir = os.path.join(intermediate_file_dir, "common_sample_cnt")
 common_patient_data_dir = os.path.join(intermediate_file_dir, "common_patients_data")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir,methy_matlab_data_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir,common_patient_data_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir,methy_matlab_data_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir, common_patient_data_dir, huge_global_file_dir]
 
 for dir_name in dirs:
     if not os.path.exists(dir_name):
@@ -283,6 +284,92 @@ def label_TF_genes(input_tf_fp):
             tf_labels[tidx] = 1
     return tf_labels
 
+# 合并区间,区间元素形式:[(5, 7), (10, 12), (6, 12)]
+def merge_intervals(intervals):
+    """
+    A simple algorithm can be used:
+    1. Sort the intervals in increasing order
+    2. Push the first interval on the stack
+    3. Iterate through intervals and for each one compare current interval
+       with the top of the stack and:
+       A. If current interval does not overlap, push on to stack
+       B. If current interval does overlap, merge both intervals in to one
+          and push on to stack
+    4. At the end return stack
+    """
+    sorted_by_lower_bound = sorted(intervals, key=lambda tup: tup[0])
+    merged = []
+
+    for higher in sorted_by_lower_bound:
+        if not merged:
+            merged.append(higher)
+        else:
+            lower = merged[-1]
+            # test for intersection between lower and higher:
+            # we know via sorting that lower[0] <= higher[0]
+            if higher[0] <= lower[1]:
+                upper_bound = max(lower[1], higher[1])
+                merged[-1] = (lower[0], upper_bound)  # replace by merged interval
+            else:
+                merged.append(higher)
+    return merged
+
+#从gtf文件中提取每个基因的外显子(exon)区间.
+# 因为每个基因有多个transcript，每个的外显子区域不同
+# 最后返回的结果是对该基因所有transcript的外显子区域合并后的结果
+def extract_exon_regions(gtf_fp, out_fp, relative_pos= False):
+    exon_region_dict = {item: [] for item in GENOME}
+
+    line_counter = 0
+    with open(gtf_fp, "r") as gtf_file:
+        for i in range(5):
+            gtf_file.readline()
+            line_counter += 1
+        line = gtf_file.readline()
+
+        while line:
+            if line_counter % 10000 ==0:
+                print "processed %d lines" % line_counter
+            line_contents = line.split("\t")
+            try:
+                feature = line_contents[2]
+                if feature == "exon":
+                    groups = line_contents[-1].split(";")[0:-1]
+                    group_dict = {}
+                    for item in groups:
+                        [k, v] = item.strip().split(" ")[0:2]
+                        group_dict[k] = v.replace('\"', "")
+                    if group_dict["gene_biotype"] == "protein_coding":
+                        gene_name = alias_dict[group_dict["gene_name"]]
+                        if gene_name in GENOME:
+                            exon_start = int(line_contents[3])
+                            exon_end = int(line_contents[4])
+                            if not relative_pos:
+                                exon_region_dict[gene_name].append((exon_start, exon_start))
+                            else:
+                                g_start = gene_infos[gene_name]["start"]
+                                g_end = gene_infos[gene_name]["end"]
+                                g_strand = gene_infos[gene_name]["strand"]
+                                stotss = exon_start - g_start if g_strand else g_end - exon_start
+                                etotss = exon_end - g_start if g_strand else g_end - exon_end
+
+                                exon_region_dict[gene_name].append((min(stotss, etotss), max(stotss, etotss)))
+            except IndexError, e1:
+                pass
+            except KeyError, e2:
+                pass
+            line = gtf_file.readline()
+            line_counter += 1
+    print "read and handled %s, start sorting" % gtf_fp
+    merged_exon_region_dict = {item: merge_intervals(exon_region_dict[item]) for item in GENOME}
+    with open(out_fp, "w") as out_file:
+        for gidx, item in enumerate(GENOME):
+            exon_regions_strs = [str(exon_region[0]) + "," + str(exon_region[1]) for exon_region in merged_exon_region_dict[item]]
+            ltw = str(gidx + 1) + "\t" + ";".join(exon_regions_strs) + "\n"
+            out_file.write(ltw)
+    print "finish writing merged exon regions"
+    return merged_exon_region_dict
+
 CGI_genenames_fp = os.path.join(global_files_dir, "gene_names_with_CGI.txt")
 gene_cgi_labels = label_cgi_genes(CGI_genenames_fp)
 
@@ -312,6 +399,12 @@ gene_pos_labels = generate_gene_position_info(gene_body_fp)
 # v22_gene_pos_labels = extract_gene_info_from_v22_gtf(v22_gtf_fp)
 
 gene_pos_labels_used = gene_pos_labels
+
+gene_infos = {}
+for gidx, gene_name in enumerate(GENOME):
+    chr_no, start, end, strand = gene_pos_labels_used[gidx]
+    gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
+
 #生成全局统一的gene_index_file,列分别是:gene_idx, gene_name, is_cgi_contained, is_TF_gene, gene_category(0: other, 1: onco, 2: tsg 3: onco_and_tsg)
 def generate_gene_index(gene_idx_fp, gene_label_fp):
     with open(gene_idx_fp,"w") as gene_idx_file:
@@ -337,8 +430,12 @@ with open(os.path.join(global_files_dir, "mutation_classification.txt"),"w") as 
 #some global variables
 gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
 gene_label_path = os.path.join(global_files_dir, "gene_label.dat")
+grch38_gtf_fp = os.path.join(huge_global_file_dir, "Homo_sapiens.GRCh38.90.gtf")
+exon_regions_path = os.path.join(global_files_dir, "exon_regions.txt")
+extract_exon_regions(grch38_gtf_fp, exon_regions_path, relative_pos=True)
 if __name__ == '__main__':
-    generate_gene_index(gene_idx_path, gene_label_path)
+    pass
+    # generate_gene_index(gene_idx_path, gene_label_path)
     # yc_geneset_fp = os.path.join(global_files_dir,'yucheng_candidate_set.txt')
     # out_gidxs_fp = os.path.join(codes_files_dir,'matlab','yucheng_candidate_set.ind')
     # match_gene_idx_for_genenames(yc_geneset_fp,out_gidxs_fp)

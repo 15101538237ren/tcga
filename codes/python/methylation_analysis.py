@@ -63,10 +63,6 @@ def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):
 def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_filepath, uuids, load=False, whole_genes= True):
 
     if not load:
-        gene_infos = {}
-        for gidx, gene_name in enumerate(GENOME):
-            chr_no, start, end, strand = gene_pos_labels_used[gidx]
-            gene_infos[gene_name] = {'chr': chr_no, 'start': start, 'end': end, 'strand': strand}
 
         profile = {}
         profile_cpg = {}
