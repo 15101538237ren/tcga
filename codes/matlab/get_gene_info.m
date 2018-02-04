@@ -67,7 +67,7 @@ out_normal_sample_num_file = 'out_normal_sample_num.txt';
 py.get_gene_data.get_sample_num(sample_base_dir, cancer_name, normal_stage, out_normal_sample_num_file);
 normal_sample_num = load(out_normal_sample_num_file);
 
-figdir = strcat(base_path, 'mutation_classification/', cancer_name,'/');
+figdir = strcat(base_path, 'mutation_classification/', cancer_name, '_', gene_name, '/');
 if ~exist(figdir)
     mkdir(figdir);
 end
