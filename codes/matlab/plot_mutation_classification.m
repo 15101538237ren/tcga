@@ -20,7 +20,7 @@ close all;
 fig = figure();
 clf();
 
-py.get_gene_data.get_all_sample_methy(sample_base_dir, cancer_name, cancer_stage, gene_id);
+py.get_gene_data.get_all_sample_ave_methy(sample_base_dir, cancer_name, cancer_stage, gene_id);
 py.get_gene_data.get_all_sample_mutation(sample_base_dir, cancer_name, cancer_stage, gene_id);
 
 normal_methy_list = load('mean_methy.tsv');

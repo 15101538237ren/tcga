@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 
 def get_sample_num(dir_path, cancer_name, stage_name, w_file=True):
 	cancer_dir = os.path.join(dir_path, cancer_name)
@@ -60,14 +61,13 @@ def get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_fi
 
 
 #获取一种gene的全部样本的平均甲基化水平
-def get_all_sample_methy(dir_path, cancer_name, stage_name, gene_id, w_file=True):
+def get_all_sample_ave_methy(dir_path, cancer_name, stage_name, gene_id, w_file=True):
 	gene_id = int(gene_id)
 	cancer_dir = os.path.join(dir_path, cancer_name)
 	stage_dir = os.path.join(cancer_dir, stage_name)
 	sample_num = get_sample_num(dir_path, cancer_name, stage_name, w_file=False)
 
 	out_file_name = 'out_ave_methy.txt'
-	out_list = []
 	new_methy_dict = {}
 	new_num_dict = {}
 	for sample_id in range(1, sample_num + 1):
@@ -99,6 +99,33 @@ def get_all_sample_methy(dir_path, cancer_name, stage_name, gene_id, w_file=True
 		file.close()
 		return
 	return new_list
+
+def get_all_sample_methy_mat(dir_path, cancer_name, stage_name, gene_id):
+	gene_id = int(gene_id)
+	cancer_dir = os.path.join(dir_path, cancer_name)
+	stage_dir = os.path.join(cancer_dir, stage_name)
+	sample_num = get_sample_num(dir_path, cancer_name, stage_name, w_file=False)
+
+	new_methy_dict = {}
+	for sample_id in range(1, sample_num + 1):
+		#print sample_id
+		ret_list = get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_file=False)
+		#print  ret_list
+		if len(ret_list) > 0 and len(ret_list[0]) > 0:
+			for item in ret_list:
+				pos = int(item[0])
+				beta_value = float(item[1])
+				new_methy_dict[pos] = new_methy_dict.get(pos, [])
+				new_methy_dict[pos].append(beta_value)
+
+	#print new_methy_dict
+	new_list = sorted(new_methy_dict.items())
+	out_list = []
+	for item_tuple in new_list:
+		item_list = [item_tuple[0]]
+		item_list.extend(item_tuple[1])
+		out_list.append(item_list)
+	return np.mat(out_list)
 
 
 #将每一种类型的突变写入文件, 方便Matlab直接load

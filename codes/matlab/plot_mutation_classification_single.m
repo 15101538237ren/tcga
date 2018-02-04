@@ -3,6 +3,7 @@ global sample_base_dir;
 global sample_num;
 global cancer_name;
 global gene_id;
+global gene_name;
 global tss_len;
 global figdir;
 global gene_body_len;
@@ -30,7 +31,8 @@ for k=1:fig_num
     J = find(normal_methy_list(:,1) >= 0);
     normal_methy_list(J,1) = normal_methy_list(J,1) / gene_body_len;
     bar(normal_methy_list(:,1), normal_methy_list(:,2), 'k', 'LineWidth',1.5);
-    title(['COAD APC normal average beta-value']);
+    title_str = sprintf('%s %s normal average beta-value', cancer_name, gene_name);
+    title([title_str]);
     xlim([-0.2 1]);
     ylim([0 1]);
 
