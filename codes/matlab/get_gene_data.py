@@ -104,12 +104,12 @@ def get_all_sample_methy_mat(dir_path, cancer_name, stage_name, gene_id):
 	gene_id = int(gene_id)
 	cancer_dir = os.path.join(dir_path, cancer_name)
 	stage_dir = os.path.join(cancer_dir, stage_name)
-	sample_num = get_sample_num(dir_path, cancer_name, stage_name, w_file=False)
+	sample_num = get_sample_num(dir_path, cancer_name, stage_name, '', w_file=False)
 
 	new_methy_dict = {}
 	for sample_id in range(1, sample_num + 1):
 		#print sample_id
-		ret_list = get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_file=False)
+		ret_list = get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, '', w_file=False)
 		#print  ret_list
 		if len(ret_list) > 0 and len(ret_list[0]) > 0:
 			for item in ret_list:
@@ -419,7 +419,7 @@ def write_methy_mutation_file(cancer_name, gene_name, sample_num, p_value_list, 
 	file.close()
 
 def output_methy_mutation_file(global_file_dir, common_dir_path, p_value_dir_path, cancer_name, stage_name, gene_id, sample_fname):
-	sample_num = get_sample_num(common_dir_path, cancer_name, stage_name, sample_fname, w_file=False)
+	sample_num = get_sample_num(common_dir_path, cancer_name, stage_name, sample_fname, '', w_file=False)
 	p_value_list = get_sample_methy_p_value(common_dir_path, p_value_dir_path, cancer_name, stage_name, gene_id)
 	mutation_info_dict = get_all_sample_mutation(common_dir_path, cancer_name, stage_name, gene_id, sample_num_file_name, w_file=False, \
 		simple_m_type=False, loop_method=get_mutation_list_by_sample)
