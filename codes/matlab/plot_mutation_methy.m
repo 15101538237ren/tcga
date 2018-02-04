@@ -24,7 +24,7 @@ for i=1:19
 end
 Z(find(Z < 0))=0.0;
 b=bar(Z,'stacked');
-b(1).FaceColor='blue';IMG_0156_2.jpg
+b(1).FaceColor='blue';
 b(2).FaceColor='yellow';
 b(3).FaceColor='red';
 yt = sum(Z,2) + 0.1;

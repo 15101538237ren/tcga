@@ -1,7 +1,7 @@
 function plotmethy()
 G=load('../../global_files/gene_label.dat');
-p_score_path = 'G:/intermediate_file/methy_pvalue/merged_stage/COAD/COAD_p_score.dat';
-n_score_path = 'G:/intermediate_file/methy_pvalue/merged_stage/COAD/COAD_n_score.dat';
+p_score_path = '../../data/intermediate_file/methy_pvalue/merged_stage/COAD/COAD_p_score.dat';
+n_score_path = '../../data/intermediate_file/methy_pvalue/merged_stage/COAD/COAD_n_score.dat';
 SP=load(p_score_path);
 SN=load(n_score_path);
 
@@ -75,11 +75,12 @@ xlabel('Gene');
 ylabel('M^- Score');
 title('(f) Other genes');
 
-figdir = '../../figures/methy/';
+figdir = '../../figures/plotmethy/';
 
 if ~exist(figdir)
     mkdir(figdir);
 end
 
 exportfig(fig,strcat(figdir, 'MScore.eps'),'color','cmyk','fontmode','fixed','fontsize',10);
+close all;
 end
