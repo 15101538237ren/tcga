@@ -9,9 +9,10 @@ global figdir;
 global gene_body_len;
 global cancer_stage;
 global out_ave_methy_file;
-global out_ins_num_file;
-global out_del_num_file;
-global out_snp_num_file;
+% global out_ins_num_file;
+% global out_del_num_file;
+% global out_snp_num_file;
+global normal_mean_methy_file;
 
 clc;
 %clear;
@@ -20,19 +21,20 @@ close all;
 fig = figure();
 clf();
 
-py.get_gene_data.get_all_sample_methy(sample_base_dir, cancer_name, cancer_stage, gene_id);
-py.get_gene_data.get_all_sample_mutation(sample_base_dir, cancer_name, cancer_stage, gene_id);
 
-normal_methy_list = load('mean_methy.tsv');
+py.get_gene_data.get_all_sample_methy(sample_base_dir, cancer_name, cancer_stage, gene_id, sample_num);
+py.get_gene_data.get_all_sample_mutation(sample_base_dir, cancer_name, cancer_stage, gene_id, sample_num);
+
+normal_methy_list = load(normal_mean_methy_file);
 J = find(normal_methy_list(:,1) < 0);
 normal_methy_list(J,1) = normal_methy_list(J,1) / tss_len;
 J = find(normal_methy_list(:,1) >= 0);
 normal_methy_list(J,1) = normal_methy_list(J,1) / gene_body_len;
 
 methy_list = load(out_ave_methy_file);
-ins_list = load(out_ins_num_file);
-del_list = load(out_del_num_file);
-snp_list = load(out_snp_num_file);
+% ins_list = load(out_ins_num_file);
+% del_list = load(out_del_num_file);
+% snp_list = load(out_snp_num_file);
 
 J = find(methy_list(:,1) < 0);
 methy_list(J,1) = methy_list(J,1) / tss_len;
@@ -119,7 +121,7 @@ ylim([0 1]);
 % xlim([-0.2 1]);
 % ylim([0 1]);
 % 
-print(fig,strcat(figdir, 'COAD_avg_methy_and_mutation.pdf'),'-dpdf','-opengl');
+print(fig,strcat(figdir, 'COAD_',gene_name,'_avg_methy_and_mutation.pdf'),'-dpdf','-opengl');
 close all;
 delete('*.txt');
 end

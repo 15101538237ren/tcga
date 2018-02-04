@@ -1,4 +1,4 @@
-function plot_mutation_classification_single()
+function plot_mutation_classification_single_i()
 global sample_base_dir;
 global sample_num;
 global cancer_name;
@@ -12,6 +12,7 @@ global out_methy_file;
 global out_ins_file;
 global out_del_file;
 global out_snp_file;
+global normal_mean_methy_file;
 %clc;
 %clear;
 %close all;
@@ -25,7 +26,7 @@ for k=1:fig_num
     clf();
     subplot(sub_plot_num+1,1,1);
     hold on;
-    normal_methy_list = load('mean_methy.tsv');
+    normal_methy_list = load(normal_mean_methy_file);
     J = find(normal_methy_list(:,1) < 0);
     normal_methy_list(J,1) = normal_methy_list(J,1) / tss_len;
     J = find(normal_methy_list(:,1) >= 0);
@@ -42,7 +43,7 @@ for k=1:fig_num
         title(strcat(num2str(sample_id)));
         xlim([-0.2 1]);
         ylim([0 1]);
-        py.get_gene_data.get_sample_methy(sample_base_dir, cancer_name, cancer_stage, sample_id, gene_id);
+        py.get_gene_data.get_sample_methy(sample_base_dir, cancer_name, cancer_stage, sample_id, gene_id, out_methy_file);
         py.get_gene_data.get_sample_mutation(sample_base_dir, cancer_name, cancer_stage, sample_id, gene_id);
         methy_list = load(out_methy_file);
         ins_list = load(out_ins_file);
@@ -72,7 +73,7 @@ for k=1:fig_num
         plot(snp_list, y3, '-o', 'MarkerSize',4, 'Markerfacecolor','m','markeredgecolor','m'); 
         
     end
-    print(fig,strcat(figdir, num2str(k), '_compare.pdf'),'-dpdf','-opengl');
+    print(fig,strcat(figdir, gene_name, '_', num2str(k), '_compare.pdf'),'-dpdf','-opengl');
 end
 close all;
 delete('*.txt');

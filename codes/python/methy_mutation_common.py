@@ -466,9 +466,10 @@ def mean_methy_of_promoter(target_gene_name, cancer_name, cancer_stage, xshift =
 if __name__ == '__main__':
     normal = True
     # extract_submitter_ids_from_methylation_uuids_and_mutation_submitter_ids(normal=normal)
-    obtain_promoter_and_genebody_methy_status(normal=normal)
+    # obtain_promoter_and_genebody_methy_status(normal=normal)
     # obtain_promoter_and_genebody_mutation_status()
     # compute_common_mutation_or_methy_variation_samples()
-    # normal_mean_cpg_methy("APC", "COAD")
-    # mean_methy_of_promoter("APC", "COAD", "normal", xshift= 1)
-    # mean_methy_of_promoter("APC", "COAD", "i", xshift= 2)
+    target_gene_name = "FAT4"
+    normal_mean_cpg_methy(target_gene_name, "COAD")
+    # mean_methy_of_promoter(target_gene_name, "COAD", "normal", xshift= 1)
+    # mean_methy_of_promoter(target_gene_name, "COAD", "i", xshift= 2)

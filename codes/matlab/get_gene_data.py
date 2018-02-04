@@ -3,7 +3,7 @@
 import os
 import pandas as pd
 
-def get_sample_num(dir_path, cancer_name, stage_name, w_file=True):
+def get_sample_num(dir_path, cancer_name, stage_name, sample_num_file_name, w_file=True):
 	cancer_dir = os.path.join(dir_path, cancer_name)
 	#print(cancer_dir)
 	stage_dir = os.path.join(cancer_dir, stage_name)
@@ -16,7 +16,6 @@ def get_sample_num(dir_path, cancer_name, stage_name, w_file=True):
 	content = file.readlines()
 	file.close()
 	if(w_file):
-		sample_num_file_name = 'out_sample_num.txt'
 		file = open(sample_num_file_name, 'w')
 		file.write(str(len(content))+'\n')
 		file.close()
@@ -24,14 +23,13 @@ def get_sample_num(dir_path, cancer_name, stage_name, w_file=True):
 	return len(content)
 
 #获取一种gene的一个样本的甲基化水平数据，并写入文件，方便Matlab直接load
-def get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_file=True):
+def get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, out_methy_fname, w_file=True):
 	sample_id = int(sample_id)
 	gene_id = int(gene_id)
 	cancer_dir = os.path.join(dir_path, cancer_name)
 	stage_dir = os.path.join(cancer_dir, stage_name)
 	methy_file_name = str(sample_id) + '_methy.tsv'
 	methy_file_path = os.path.join(stage_dir, methy_file_name)
-	out_file_name = 'out_methy.txt'
 	out_list = []
 
 	methy_file_path = methy_file_path.replace('\\','/')
@@ -50,7 +48,7 @@ def get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_fi
 	file.close()
 
 	if(w_file):
-		file = open(out_file_name, 'w')
+		file = open(out_methy_fname, 'w')
 		for item in out_list:
 			line_str = item[0] + '\t' + item[1] + '\n'
 			file.write(line_str)
@@ -60,19 +58,20 @@ def get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_fi
 
 
 #获取一种gene的全部样本的平均甲基化水平
-def get_all_sample_methy(dir_path, cancer_name, stage_name, gene_id, w_file=True):
+def get_all_sample_methy(dir_path, cancer_name, stage_name, gene_id, sample_num, w_file=True):
 	gene_id = int(gene_id)
 	cancer_dir = os.path.join(dir_path, cancer_name)
 	stage_dir = os.path.join(cancer_dir, stage_name)
-	sample_num = get_sample_num(dir_path, cancer_name, stage_name, w_file=False)
-
+	sample_num = int(sample_num)
 	out_file_name = 'out_ave_methy.txt'
 	out_list = []
 	new_methy_dict = {}
 	new_num_dict = {}
 	for sample_id in range(1, sample_num + 1):
 		#print sample_id
-		ret_list = get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, w_file=False)
+
+		out_methy_fname = "tmp_methy.txt"
+		ret_list = get_sample_methy(dir_path, cancer_name, stage_name, sample_id, gene_id, out_methy_fname, w_file=False)
 		#print  ret_list
 		if len(ret_list) > 0 and len(ret_list[0]) > 0:
 			for item in ret_list:
@@ -259,12 +258,11 @@ def get_mutation_list_by_sample(stage_dir, gene_id, sample_num, simple_m_type=Tr
 
 
 #获取一个gene的全部样本对应的mutation数量
-def get_all_sample_mutation(dir_path, cancer_name, stage_name, gene_id, w_file=True, simple_m_type=True, loop_method=get_mutation_list):
+def get_all_sample_mutation(dir_path, cancer_name, stage_name, gene_id, sample_num, w_file=True, simple_m_type=True, loop_method=get_mutation_list):
 	gene_id = int(gene_id)
 	cancer_dir = os.path.join(dir_path, cancer_name)
 	stage_dir = os.path.join(cancer_dir, stage_name)
-	sample_num = get_sample_num(dir_path, cancer_name, stage_name, w_file=False)
-	
+	sample_num = int(sample_num)
 	[out_ins_list, out_del_list, out_snp_list] = loop_method(stage_dir, gene_id, sample_num, simple_m_type=simple_m_type)
 	#print 'out_ins_list:', out_ins_list
 	#print 'out_del_list:', out_del_list
@@ -392,10 +390,10 @@ def write_methy_mutation_file(cancer_name, gene_name, sample_num, p_value_list, 
 
 	file.close()
 
-def output_methy_mutation_file(global_file_dir, common_dir_path, p_value_dir_path, cancer_name, stage_name, gene_id):
-	sample_num = get_sample_num(common_dir_path, cancer_name, stage_name, w_file=False)
+def output_methy_mutation_file(global_file_dir, common_dir_path, p_value_dir_path, cancer_name, stage_name, gene_id, sample_fname):
+	sample_num = get_sample_num(common_dir_path, cancer_name, stage_name, sample_fname, w_file=False)
 	p_value_list = get_sample_methy_p_value(common_dir_path, p_value_dir_path, cancer_name, stage_name, gene_id)
-	mutation_info_dict = get_all_sample_mutation(common_dir_path, cancer_name, stage_name, gene_id, w_file=False, \
+	mutation_info_dict = get_all_sample_mutation(common_dir_path, cancer_name, stage_name, gene_id, sample_num_file_name, w_file=False, \
 		simple_m_type=False, loop_method=get_mutation_list_by_sample)
 	mutation_class_dict = get_mutation_classification(global_file_dir)
 	gene_name = get_gene_name(global_file_dir, gene_id)

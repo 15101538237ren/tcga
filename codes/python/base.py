@@ -12,7 +12,7 @@ figure_dir = os.path.join(base_dir, "figures")
 
 #second level dir
 raw_data_dir ="/Volumes/Elements/tcga_raw_data"#"/Users/Ren/PycharmProjects/tcga_raw_data" # "/disk/tcga_raw_data"
-
+disk_intermediate_base_dir = "/Volumes/Elements/"
 #third level dir
 dna_methy_data_dir = os.path.join(raw_data_dir, "dna_methy_data")
 rna_data_dir = os.path.join(raw_data_dir, "rna")
@@ -20,7 +20,8 @@ snv_data_dir = os.path.join(raw_data_dir, "snv")
 cnv_data_dir = os.path.join(raw_data_dir, "cnv")
 GRCh38_dir = os.path.join(raw_data_dir, "GRCh38")
 
-intermediate_file_dir = os.path.join(data_dir, "intermediate_file")
+intermediate_file_dir = os.path.join(disk_intermediate_base_dir, "intermediate_file")
+
 huge_global_file_dir = os.path.join(data_dir, "huge_global_files")
 
 #fourth level dir
@@ -432,9 +433,8 @@ gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
 gene_label_path = os.path.join(global_files_dir, "gene_label.dat")
 grch38_gtf_fp = os.path.join(huge_global_file_dir, "Homo_sapiens.GRCh38.90.gtf")
 exon_regions_path = os.path.join(global_files_dir, "exon_regions.txt")
-extract_exon_regions(grch38_gtf_fp, exon_regions_path, relative_pos=True)
 if __name__ == '__main__':
-    pass
+    extract_exon_regions(grch38_gtf_fp, exon_regions_path, relative_pos=True)
     # generate_gene_index(gene_idx_path, gene_label_path)
     # yc_geneset_fp = os.path.join(global_files_dir,'yucheng_candidate_set.txt')
     # out_gidxs_fp = os.path.join(codes_files_dir,'matlab','yucheng_candidate_set.ind')
