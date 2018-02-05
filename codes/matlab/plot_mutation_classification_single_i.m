@@ -1,9 +1,6 @@
-function plot_mutation_classification_single_i()
+function plot_mutation_classification_single_i(cancer_name, gene_name, gene_id)
 global sample_base_dir;
 global sample_num;
-global cancer_name;
-global gene_name;
-global gene_id;
 global tss_len;
 global figdir;
 global gene_body_len;

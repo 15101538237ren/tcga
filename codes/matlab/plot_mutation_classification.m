@@ -1,9 +1,6 @@
-function plot_mutation_classification()
+function plot_mutation_classification(cancer_name, gene_name, gene_id)
 global sample_base_dir;
 global sample_num;
-global cancer_name;
-global gene_id;
-global gene_name;
 global tss_len;
 global figdir;
 global gene_body_len;
@@ -121,7 +118,7 @@ ylim([0 1]);
 % xlim([-0.2 1]);
 % ylim([0 1]);
 % 
-print(fig,strcat(figdir, 'COAD_',gene_name,'_avg_methy_and_mutation.pdf'),'-dpdf','-opengl');
+print(fig,strcat(figdir, cancer_name, '_',gene_name,'_avg_methy_and_mutation.pdf'),'-dpdf','-opengl');
 close all;
-delete('*.txt');
+%delete('*.txt');
 end
