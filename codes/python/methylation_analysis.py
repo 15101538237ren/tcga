@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import numpy.ma as ma
 from base import *
 methy_metadata_path = os.path.join(global_files_dir, "methy_24_cancer_meta.json")
 tumor_suppressed_gene_filepath = os.path.join(global_files_dir, "gene_with_protein_product.tsv")
@@ -546,6 +547,52 @@ def sort_pscore_pipline():
             out_sorted_pscore_both_file.close()
             out_sorted_pscore_other_file.close()
 
+def dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name, in_dir, out_dir, nbins):
+    entropy_array = [[] for item in range(len(stage_list))]
+
+    normal_methy_dat_fp = os.path.join(in_dir, cancer_name + "_normal_methy_dat.dat")
+    normal_methy_dat = pd.read_csv(normal_methy_dat_fp, sep='\t', lineterminator='\n', header=0, index_col=0, dtype=np.float64)
+    normal_ma_mean = ma.masked_less(normal_methy_dat.values, 0).mean(axis= 1)
+    normal_ma_mean[normal_ma_mean.mask] = 0.0
+
+    for stage_idx, stage_name in enumerate(stage_list):
+        #创建初始的病人熵数组
+        sample_input_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_uuids.txt")
+        sample_uuids = read_tab_seperated_file_and_get_target_column(1, sample_input_fp)
+        for sample_uuid in sample_uuids:
+            entropy_array[stage_idx].append(-1)
+
+        input_dat_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_methy_dat.dat")
+        methy_dat = pd.read_csv(input_dat_fp, sep='\t', lineterminator='\n', header= 0, index_col=0, dtype=np.float64)
+
+        methy_ma_matrix = ma.masked_less(np.transpose(methy_dat.values), 0)
+        for sample_idx, sample_methy_array in enumerate(methy_ma_matrix):
+            compressed_methy_arr = (sample_methy_array - normal_ma_mean).compressed()
+            hist, bin_edges = np.histogram(compressed_methy_arr, bins=nbins, range=(compressed_methy_arr.min(), compressed_methy_arr.max()))
+            freqencies = hist / float(len(compressed_methy_arr))
+            positive_frequencies = [freq for freq in freqencies if freq > 10e-9]
+            entropy_of_this_sample = 0.0
+            for fidx, freq in enumerate(positive_frequencies):
+                entropy_of_this_sample += -1.0 * freq * math.log(freq)
+            # print entropy_of_this_gene
+            entropy_array[stage_idx][sample_idx] = entropy_of_this_sample
+        out_entropy_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_name + "_sample_entropy.dat")
+        write_tab_seperated_file_for_a_list(out_entropy_dat_fp, entropy_array[stage_idx], index_included=True)
+
+#计算每个病人的熵
+def dump_sample_entropy_into_dat_pipeline():
+    nbins = 50
+    out_dir = os.path.join(methy_sample_entropy_dir, dname)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    stages_fp = os.path.join(methy_sample_entropy_dir, dname, "stage_idx.txt")
+    write_tab_seperated_file_for_a_list(stages_fp, stage_list, index_included=True)
+
+    for cancer_name in cancer_names:
+        print "now start %s" % cancer_name
+        in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+        dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name,in_dir, out_dir, nbins)
+
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     pass
@@ -559,4 +606,5 @@ if __name__ == '__main__':
     # dump_stage_std_and_mean_pipline()
     # calc_methy_correlation_pipeline()
     # sort_pscore_pipline()
+    dump_sample_entropy_into_dat_pipeline()
     pass

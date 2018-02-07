@@ -20,7 +20,7 @@ snv_data_dir = os.path.join(raw_data_dir, "snv")
 cnv_data_dir = os.path.join(raw_data_dir, "cnv")
 GRCh38_dir = os.path.join(raw_data_dir, "GRCh38")
 
-intermediate_file_dir = os.path.join(disk_intermediate_base_dir, "intermediate_file")
+intermediate_file_dir = os.path.join(data_dir, "intermediate_file")
 
 huge_global_file_dir = os.path.join(data_dir, "huge_global_files")
 
@@ -34,6 +34,7 @@ methy_matlab_data_dir = os.path.join(intermediate_file_dir, "methy_matlab_data")
 snv_intermidiate_dir = os.path.join(intermediate_file_dir, "snv_intermidiate")
 rna_intermidiate_dir = os.path.join(intermediate_file_dir, "rna_intermidiate")
 methy_entropy_dir = os.path.join(intermediate_file_dir, "methy_entropy")
+methy_sample_entropy_dir = os.path.join(intermediate_file_dir, "methy_sample_entropy")
 methy_corr_dir = os.path.join(intermediate_file_dir, "methy_corr")
 
 methy_figure_dir = os.path.join(figure_dir, "methy_scatter")
@@ -43,7 +44,7 @@ methy_pvalue_dir = os.path.join(intermediate_file_dir, "methy_pvalue")
 common_sample_cnt_dir = os.path.join(intermediate_file_dir, "common_sample_cnt")
 common_patient_data_dir = os.path.join(intermediate_file_dir, "common_patients_data")
 
-dirs = [methy_pkl_dir, methy_intermidiate_dir,methy_matlab_data_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir, common_patient_data_dir, huge_global_file_dir]
+dirs = [methy_pkl_dir, methy_intermidiate_dir,methy_matlab_data_dir, snv_intermidiate_dir, methy_mean_std_dir, methy_entropy_dir, methy_sample_entropy_dir, methy_corr_dir, methy_pvalue_dir, common_sample_cnt_dir, common_patient_data_dir, huge_global_file_dir]
 
 for dir_name in dirs:
     if not os.path.exists(dir_name):
