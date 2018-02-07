@@ -554,7 +554,7 @@ def dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name,
     normal_methy_dat = pd.read_csv(normal_methy_dat_fp, sep='\t', lineterminator='\n', header=0, index_col=0, dtype=np.float64)
     normal_ma_mean = ma.masked_less(normal_methy_dat.values, 0).mean(axis= 1)
     normal_ma_mean[normal_ma_mean.mask] = 0.0
-
+    matlab_plot_entropy_array = []
     for stage_idx, stage_name in enumerate(stage_list):
         #创建初始的病人熵数组
         sample_input_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_uuids.txt")
@@ -567,7 +567,7 @@ def dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name,
 
         methy_ma_matrix = ma.masked_less(np.transpose(methy_dat.values), 0)
         for sample_idx, sample_methy_array in enumerate(methy_ma_matrix):
-            compressed_methy_arr = (sample_methy_array - normal_ma_mean).compressed()
+            compressed_methy_arr = (sample_methy_array - normal_ma_mean).compressed() #sample_methy_array.compressed()
             hist, bin_edges = np.histogram(compressed_methy_arr, bins=nbins, range=(compressed_methy_arr.min(), compressed_methy_arr.max()))
             freqencies = hist / float(len(compressed_methy_arr))
             positive_frequencies = [freq for freq in freqencies if freq > 10e-9]
@@ -576,9 +576,16 @@ def dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name,
                 entropy_of_this_sample += -1.0 * freq * math.log(freq)
             # print entropy_of_this_gene
             entropy_array[stage_idx][sample_idx] = entropy_of_this_sample
+            ro = random.random() * 0.4 - 0.2
+            matlab_plot_entropy_array.append("\t".join([str(stage_idx + 1 + ro), str(entropy_of_this_sample)]))
         out_entropy_dat_fp = os.path.join(out_dir, cancer_name + "_" + stage_name + "_sample_entropy.dat")
         write_tab_seperated_file_for_a_list(out_entropy_dat_fp, entropy_array[stage_idx], index_included=True)
 
+    out_matlab_plot_entropy_fp = os.path.join(out_dir, cancer_name + "_matlab_sample_entropy.dat")
+    with open(out_matlab_plot_entropy_fp,"w") as matlab_plot_entropy_file:
+        for mat_item in matlab_plot_entropy_array:
+            matlab_plot_entropy_file.write(mat_item + "\n")
+        print "write %s successful!" % out_matlab_plot_entropy_fp
 #计算每个病人的熵
 def dump_sample_entropy_into_dat_pipeline():
     nbins = 50
