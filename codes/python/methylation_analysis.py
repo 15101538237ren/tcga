@@ -35,25 +35,26 @@ def connect_uuid_to_cancer_stage_and_age(cancer_name, uuid_list, methy_metadata_
 
         stage_save = "not reported"
         age_save = -1
-        if not normal:
-            # if cancer, detail stage classification
-            for obj in json_obj:
-                if obj["file_id"] != uuid:
-                    continue
-                else:
+        # if cancer, detail stage classification
+        for obj in json_obj:
+            if obj["file_id"] != uuid:
+                continue
+            else:
 
-                    if "cases" in obj.keys():
-                        if len(obj["cases"]):
-                            if "diagnoses" in obj["cases"][0].keys():
-                                if len(obj["cases"][0]["diagnoses"]):
+                if "cases" in obj.keys():
+                    if len(obj["cases"]):
+                        if "diagnoses" in obj["cases"][0].keys():
+                            if len(obj["cases"][0]["diagnoses"]):
+                                tmp_age = obj["cases"][0]["diagnoses"][0]["age_at_diagnosis"]
+                                age_save = tmp_age / 365.25 if tmp_age else -1
+
+                                if not normal:
                                     stage = obj["cases"][0]["diagnoses"][0]["tumor_stage"]
                                     if stage != "not reported":
                                         stage_save = stage.split(" ")[1]
-                                    tmp_age = obj["cases"][0]["diagnoses"][0]["age_at_diagnosis"]
-                                    age_save = tmp_age / 365.25 if tmp_age else -1
-                    break
-        else:
-            stage_save = "normal"
+                                else:
+                                    stage_save = "normal"
+                break
         cnt_cases += 1
         uuid_to_stage[uuid] = stage_save
         uuid_to_age[uuid] = age_save

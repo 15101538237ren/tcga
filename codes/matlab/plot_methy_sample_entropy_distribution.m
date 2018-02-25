@@ -43,5 +43,3 @@ end
 fig_save_path = strcat(figure_dir, 'sample_entropy_distribution.eps');
 exportfig(fig, fig_save_path , 'FontMode', 'fixed', 'color', 'cmyk','width',8, 'height', 4, 'FontSize', 12,'Resolution',300,'LineWidth',0.5);
 close all;
-   
-
