@@ -434,6 +434,7 @@ gene_idx_path = os.path.join(global_files_dir, "gene_idx.txt")
 gene_label_path = os.path.join(global_files_dir, "gene_label.dat")
 grch38_gtf_fp = os.path.join(huge_global_file_dir, "Homo_sapiens.GRCh38.90.gtf")
 exon_regions_path = os.path.join(global_files_dir, "exon_regions.txt")
+
 if __name__ == '__main__':
     extract_exon_regions(grch38_gtf_fp, exon_regions_path, relative_pos=True)
     # generate_gene_index(gene_idx_path, gene_label_path)

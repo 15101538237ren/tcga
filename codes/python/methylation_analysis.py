@@ -19,10 +19,11 @@ stage_list = methy_and_rna_merged_stages if is_merge_stage else methy_and_rna_st
 dname = "merged_stage" if is_merge_stage else "stage"
 
 #通过json文件, 获取每个uuid对应的一级癌症阶段merged_tumor_stage和二级癌症阶段tumor_stage
-def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):
+def connect_uuid_to_cancer_stage_and_age(cancer_name, uuid_list, methy_metadata_path):
     stage_to_uuids = {stage_name:[] for stage_name in tumor_stages}
     merged_stage_to_uuids={stage_name:[] for stage_name in merged_stage}
     uuid_to_stage = {}
+    uuid_to_age = {}
 
     json_obj = json.load(open(methy_metadata_path,'r'))
     cnt_cases = 0
@@ -33,6 +34,7 @@ def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):
         normal = 1 if tumor_type > 9 else 0
 
         stage_save = "not reported"
+        age_save = -1
         if not normal:
             # if cancer, detail stage classification
             for obj in json_obj:
@@ -47,15 +49,18 @@ def connect_uuid_to_cancer_stage(cancer_name, uuid_list, methy_metadata_path):
                                     stage = obj["cases"][0]["diagnoses"][0]["tumor_stage"]
                                     if stage != "not reported":
                                         stage_save = stage.split(" ")[1]
+                                    tmp_age = obj["cases"][0]["diagnoses"][0]["age_at_diagnosis"]
+                                    age_save = tmp_age / 365.25 if tmp_age else -1
                     break
         else:
             stage_save = "normal"
         cnt_cases += 1
         uuid_to_stage[uuid] = stage_save
+        uuid_to_age[uuid] = age_save
         stage_to_uuids[stage_save].append(uuid)
         merged_stage_to_uuids[tumor_stage_convert[stage_save]].append(uuid)
     print "cancer_name %s total cases %d" % (cancer_name, cnt_cases)
-    return [uuid_to_stage, stage_to_uuids, merged_stage_to_uuids]
+    return [uuid_to_stage, uuid_to_age, stage_to_uuids, merged_stage_to_uuids]
 
 #最重要的一个函数, 通过遍历每个下载的tcga甲基化数据文件,将需要的统计量缓存到pkl文件中, load=True直接加载这些缓存好的文件,load=False, 从头计算并缓存, whole_genes=True代表计算全基因组的统计量, 如果计算部分基因集, 如抑癌基因集,则把它设为False
 #目前缓存并输出的统计量: profile[gene][stage_idx] = [all cases' methylation values in stage_idx(int) and gene]
@@ -78,7 +83,7 @@ def gene_and_cancer_stage_profile_of_dna_methy(cancer_name, data_path, pickle_fi
                 profile[gene].append([])
                 profile_cpg[gene].append([])
 
-        [uuid_to_stage, _, _] = connect_uuid_to_cancer_stage(cancer_name,uuids, methy_metadata_path)
+        [uuid_to_stage,_ , _, _] = connect_uuid_to_cancer_stage_and_age(cancer_name, uuids, methy_metadata_path)
         tot_timelapse = 0.0
         for uidx, uuid in enumerate(uuids):
             t0 = time.time()
@@ -555,6 +560,7 @@ def dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name,
     normal_ma_mean = ma.masked_less(normal_methy_dat.values, 0).mean(axis= 1)
     normal_ma_mean[normal_ma_mean.mask] = 0.0
     matlab_plot_entropy_array = []
+
     for stage_idx, stage_name in enumerate(stage_list):
         #创建初始的病人熵数组
         sample_input_fp = os.path.join(in_dir, cancer_name + "_" + stage_name + "_uuids.txt")
@@ -600,6 +606,20 @@ def dump_sample_entropy_into_dat_pipeline():
         in_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
         dump_sample_entropy_into_dat_according_to_cancer_type_and_stage(cancer_name,in_dir, out_dir, nbins)
 
+def generate_patient_age_data_pipline():
+    for cancer_name in cancer_names:
+        [_, uuid_to_age, _, _] = connect_uuid_to_cancer_stage_and_age(cancer_name, uuid_dict[cancer_name], methy_metadata_path)
+        cancer_dir = os.path.join(methy_intermidiate_dir, dname, cancer_name)
+
+        for stage_idx, stage_name in enumerate(stage_list):
+            # 创建初始的病人熵数组
+            sample_input_fp = os.path.join(cancer_dir, cancer_name + "_" + stage_name + "_uuids.txt")
+            sample_uuids = read_tab_seperated_file_and_get_target_column(1, sample_input_fp)
+            sample_ages = [uuid_to_age[sample_uuid] for sample_uuid in sample_uuids]
+
+            age_output_fp = os.path.join(cancer_dir, cancer_name + "_" + stage_name + "_ages.txt")
+            write_tab_seperated_file_for_a_list(age_output_fp, sample_ages,index_included=True)
+
 sample_count_path = os.path.join(global_files_dir, "sample_count.txt")
 if not os.path.exists(sample_count_path):
     pass
@@ -613,5 +633,6 @@ if __name__ == '__main__':
     # dump_stage_std_and_mean_pipline()
     # calc_methy_correlation_pipeline()
     # sort_pscore_pipline()
-    dump_sample_entropy_into_dat_pipeline()
+    # dump_sample_entropy_into_dat_pipeline()
+    generate_patient_age_data_pipline()
     pass
